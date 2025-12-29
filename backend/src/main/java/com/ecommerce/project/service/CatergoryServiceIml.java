@@ -1,18 +1,17 @@
 package com.ecommerce.project.service;
 
+import com.ecommerce.project.exceptions.APIException;
+import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.repositories.CategoryRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
 @Service
 public class CatergoryServiceIml implements CategoryService {
-//    private List<Category> categories = new ArrayList<>();
-//    private Long nextId =1l;
 
    private  final CategoryRepository categoryRepository;
 
@@ -23,14 +22,21 @@ public class CatergoryServiceIml implements CategoryService {
 
     @Override
     public List<Category> getAllCategories() {
-        return categoryRepository.findAll();
+     List<Category> isAnycategory=categoryRepository.findAll();
+     if (isAnycategory.isEmpty())
+     {
+         throw new APIException("No category created till now");
+     }
+     return isAnycategory;
     }
-
-
 
     @Override
     public void createdCategory(Category category) {
-//        category.setCategoryId(nextId++);
+       Category saveCategory=categoryRepository.findByCategoryName(category.getCategoryName());
+       if (saveCategory !=null)
+       {
+           throw new APIException("Category with name "+ category.getCategoryName() + " Already exists !!");
+       }
         categoryRepository.save(category);
     }
 
@@ -38,15 +44,8 @@ public class CatergoryServiceIml implements CategoryService {
 
     @Override
     public String deleteCategory(Long categoryId) {
-        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Resource not found"));
-//        List<Category> categories = categoryRepository.findAll();
-
-//        Category category= categories.stream().
-//                filter(c -> c.getCategoryId().equals(categoryId)).
-//                findFirst()
-//                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Resource not found"));
-//
-
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new ResourceNotFoundException("Category" , "categoryId",categoryId));
        categoryRepository.delete(category);
 return "Category with categoryId : " + categoryId + " deleted successfully!!";
     }
@@ -55,16 +54,35 @@ return "Category with categoryId : " + categoryId + " deleted successfully!!";
     @Override
     public Category updateCategory(Category category, Long categoryId) {
 
-        Category savedCategory = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Category not found"
-                ));
+        Category existing = categoryRepository.findById(categoryId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Category", "categoryId", categoryId)
+                );
 
-        // Update only required fields
-        savedCategory.setCategoryName(category.getCategoryName());
+        // 1️⃣ Same value update रोक्ने
+        if (existing.getCategoryName().equals(category.getCategoryName())) {
+            throw new APIException(
+                    "Category name is already '" + category.getCategoryName()
+                            + "'. No update required."
+            );
+        }
+        Category duplicate = categoryRepository.findByCategoryName(category.getCategoryName());
 
-        return categoryRepository.save(savedCategory);
+        if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {
+            throw new APIException(
+                    "Category with name '" + category.getCategoryName() +
+                            "' already exists with Id: " + duplicate.getCategoryId()
+            );
+        }
+
+
+        // 3️⃣ Update allowed
+        existing.setCategoryName(category.getCategoryName());
+
+        return categoryRepository.save(existing);
     }
+
+
 
 
 }
