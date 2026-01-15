@@ -2,7 +2,7 @@ package com.ecommerce.project.exceptions;
 // Package for all global exception handling classes
 
 
-import org.springframework.context.MessageSource;
+import com.ecommerce.project.payload.APIResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -24,10 +24,7 @@ import java.util.Map;
 // Marks this class as a global exception handler for all controllers
 public class MyGlobalExceptionHandler {
 
-    private final MessageSource messageSource;
-
-    public MyGlobalExceptionHandler(MessageSource messageSource) {
-        this.messageSource = messageSource;
+    public MyGlobalExceptionHandler() {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -64,22 +61,24 @@ public class MyGlobalExceptionHandler {
                     }
                         });
 
-        return new ResponseEntity<Map<String ,String>>(response, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
         // Returned map is automatically converted to JSON
         // and sent back to the client with HTTP 400 status
 
 
     }
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<String>myResoucrceNotFoundException(ResourceNotFoundException e){
+    public ResponseEntity<APIResponse> myResourceNotFoundException(ResourceNotFoundException e){
         String message = e.getMessage();
-        return new ResponseEntity<>(message,HttpStatus.NOT_FOUND);
+        APIResponse apiException=new APIResponse(message,false);
+        return new ResponseEntity<>(apiException,HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(APIException.class)
-    public ResponseEntity<String>myAPIException(APIException e){
+    public ResponseEntity<APIResponse>myAPIException(APIException e){
         String message = e.getMessage();
-        return new ResponseEntity<>(message,HttpStatus.BAD_REQUEST);
+        APIResponse apiException=new APIResponse(message,false);
+        return new ResponseEntity<>(apiException,HttpStatus.BAD_REQUEST);
     }
 
 
