@@ -13,8 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api")
-public class CategoryController {
-    // field annotation
+public class CategoryController { // field annotation
 private final CategoryService categoryService;
 
     @Autowired
