@@ -92,8 +92,7 @@ public class CategoryServiceIml implements CategoryService {
         // Check if the name is unchanged
         if (existing.getCategoryName().equals(categoryDTO.getCategoryName())) {
             throw new APIException(
-                    "Category name is already '" + categoryDTO.getCategoryName()
-                            + "'. No update required."
+                    STR."Category name is already '\{categoryDTO.getCategoryName()}'. No update required."
             );
         }
 
@@ -101,8 +100,7 @@ public class CategoryServiceIml implements CategoryService {
         Category duplicate = categoryRepository.findByCategoryName(categoryDTO.getCategoryName());
         if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {
             throw new APIException(
-                    "Category with name '" + categoryDTO.getCategoryName() +
-                            "' already exists with Id: " + duplicate.getCategoryId()
+                    STR."Category with name '\{categoryDTO.getCategoryName()}' already exists with Id: \{duplicate.getCategoryId()}"
             );
         }
 
