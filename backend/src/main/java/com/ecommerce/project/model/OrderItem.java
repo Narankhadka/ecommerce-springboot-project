@@ -1,9 +1,11 @@
 package com.ecommerce.project.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 
 @Entity
 @Data
@@ -14,7 +16,7 @@ public class OrderItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long oderItemId;
+    private Long orderItemId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
@@ -25,11 +27,7 @@ public class OrderItem {
     private Order order;
 
     private Integer quantity;
-
     private double discount;
-
-    private double oderProductPrice;
-
-
+    private double orderedProductPrice;
 
 }

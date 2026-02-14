@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -11,14 +12,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OrderDTO {
-
-    // once a order placed you can see following fields
-    private Long oderId;
+    private Long orderId;
     private String email;
     private List<OrderItemDTO> orderItems;
-    private LocalDateTime orderDate;
+    private LocalDate orderDate;
     private PaymentDTO payment;
-    private   Double totalAmount;
+    private Double totalAmount;
     private String orderStatus;
     private Long addressId;
 }

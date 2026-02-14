@@ -25,23 +25,22 @@ public class OrderController {
     }
 
 
-    @PostMapping("/oder/users/payments/{paymentMethod}")
-    public ResponseEntity<OrderDTO> oderProducts(@PathVariable String paymentMethod,
-                                                @RequestBody OrderRequestDTO orderRequestDTO)
-    {
-            String emailId=authUtil.loggedInEmail();
-        OrderDTO  order = orderService.placeOrder(
-                    emailId,
-                    orderRequestDTO.getAddressId(),
-                    paymentMethod,
-                    orderRequestDTO.getPgName(),
-                    orderRequestDTO.getPgPaymentId(),
-                    orderRequestDTO.getPgStatus(),
-                    orderRequestDTO.getPgResponseMessage()
-            );
-
+    @PostMapping("/order/users/payments/{paymentMethod}")
+    public ResponseEntity<OrderDTO> orderProducts(@PathVariable String paymentMethod, @RequestBody OrderRequestDTO orderRequestDTO) {
+        String emailId = authUtil.loggedInEmail();
+        System.out.println("orderRequestDTO DATA: " + orderRequestDTO);
+        OrderDTO order = orderService.placeOrder(
+                emailId,
+                orderRequestDTO.getAddressId(),
+                paymentMethod,
+                orderRequestDTO.getPgName(),
+                orderRequestDTO.getPgPaymentId(),
+                orderRequestDTO.getPgStatus(),
+                orderRequestDTO.getPgResponseMessage()
+        );
         return new ResponseEntity<>(order, HttpStatus.CREATED);
     }
+
 
 
 

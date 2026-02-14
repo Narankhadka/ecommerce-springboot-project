@@ -14,5 +14,4 @@ public class PaymentDTO {
     private String pgStatus;
     private String pgResponseMessage;
     private String pgName;
-
 }
