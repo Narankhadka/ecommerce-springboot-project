@@ -7,6 +7,7 @@ import com.ecommerce.project.payload.CategoryDTO;
 import com.ecommerce.project.payload.CategoryResponse;
 import com.ecommerce.project.repositories.CategoryRepository;
 
+import com.ecommerce.project.serviceInterface.CategoryService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -92,17 +93,27 @@ public class CategoryServiceIml implements CategoryService {
         // Check if the name is unchanged
         if (existing.getCategoryName().equals(categoryDTO.getCategoryName())) {
             throw new APIException(
-                    STR."Category name is already '\{categoryDTO.getCategoryName()}'. No update required."
+                    "Category name is already '" + categoryDTO.getCategoryName() + "'. No update required."
             );
         }
 
+
+//        // Check for duplicate name
+//        Category duplicate = categoryRepository.findByCategoryName(categoryDTO.getCategoryName());
+//        if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {
+//            throw new APIException(
+//                    STR."Category with name '\{categoryDTO.getCategoryName()}' already exists with Id: \{duplicate.getCategoryId()}"
+//            );
+//        }
         // Check for duplicate name
         Category duplicate = categoryRepository.findByCategoryName(categoryDTO.getCategoryName());
         if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {
             throw new APIException(
-                    STR."Category with name '\{categoryDTO.getCategoryName()}' already exists with Id: \{duplicate.getCategoryId()}"
+                    "Category with name '" + categoryDTO.getCategoryName() +
+                            "' already exists with Id: " + duplicate.getCategoryId()
             );
         }
+
 
         // Update entity using DTO
         existing.setCategoryName(categoryDTO.getCategoryName());

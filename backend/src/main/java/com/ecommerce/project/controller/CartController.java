@@ -3,7 +3,7 @@ package com.ecommerce.project.controller;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.repositories.CartRepository;
-import com.ecommerce.project.service.CartService;
+import com.ecommerce.project.serviceInterface.CartService;
 import com.ecommerce.project.util.AuthUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

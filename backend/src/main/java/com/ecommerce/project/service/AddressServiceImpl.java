@@ -6,6 +6,7 @@ import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AddressDTO;
 import com.ecommerce.project.repositories.AddressRepository;
 import com.ecommerce.project.repositories.UserRepository;
+import com.ecommerce.project.serviceInterface.AddressService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 

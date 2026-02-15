@@ -1,4 +1,4 @@
-package com.ecommerce.project.service;
+package com.ecommerce.project.serviceInterface;
 
 import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AddressDTO;
