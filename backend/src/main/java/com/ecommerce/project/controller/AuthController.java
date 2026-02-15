@@ -72,10 +72,10 @@ public class AuthController {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
-        UserInfoResponse response = new UserInfoResponse(userDetails.getId(),userDetails.getUsername(), roles);
+        UserInfoResponse response = new UserInfoResponse(userDetails.getId(),userDetails.getUsername(),roles,userDetails.getEmail(),jwtCookie.toString());
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,
-                jwtCookie.toString())
+                        jwtCookie.toString())
                 .body(response);  // for all device
     }
 
@@ -105,7 +105,7 @@ public class AuthController {
         // assigning the Roles to the all
 
         if (strRoles == null) {
-           Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
+            Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)
                     .orElseThrow(() -> new RuntimeException("Error: Role is not found"));
 
             roles.add(userRole);
@@ -134,9 +134,9 @@ public class AuthController {
 
 
 
-            user.setRoles(roles);
-            userRepository.save(user);
-            return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
+        user.setRoles(roles);
+        userRepository.save(user);
+        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 
 
     }

@@ -11,25 +11,25 @@ public class UserInfoResponse {
     private Long id;
     private String jwtToken;
     private String username;
+    private String email;
     private List<String> roles;
 
-    public UserInfoResponse(Long id, String username, List<String> roles) {
+    public UserInfoResponse(Long id, String username, List<String> roles, String email, String jwtToken) {
+        this.id = id;
         this.username = username;
         this.roles = roles;
+        this.email = email;
         this.jwtToken = jwtToken;
-        this.id = id;
+
     }
 
-
-    public UserInfoResponse(List<String> roles, String username,Long id) {
-        this.roles = roles;
+    public UserInfoResponse(Long id, String username, List<String> roles) {
+        this.id = id;
         this.username = username;
-        this.id = id;
-    }
-
-    public UserInfoResponse(Long id, String username, List<String> roles, String string) {
-
+        this.roles = roles;
     }
 }
+
+
 
 
