@@ -14,10 +14,9 @@
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
-    <data-source source="LOCAL" name="ecommerce@localhost" uuid="6568ad29-33d7-471c-be1c-7e11f23bb95d">
+    <data-source source="LOCAL" name="ecommerce@localhost [2]" uuid="aeeec5d8-84d0-4d0d-8722-24bc8e6c073a">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
-      <imported>true</imported>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://localhost:5432/ecommerce</jdbc-url>
       <jdbc-additional-properties>
