@@ -35,7 +35,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final ModelMapper modelMapper;
     private final FileService fileService;
-    @Value(("${project.image)"))
+    @Value("${project.image}")
     private String path;
     @Autowired
     CartRepository cartRepository;

@@ -73,8 +73,6 @@ public class CartServiceImpl implements CartService {
 
         cartItemRepository.save(newCartItem);
 
-        product.setQuantity(product.getQuantity());
-
         cart.setTotalPrice(cart.getTotalPrice() + (product.getSpecialPrice() * quantity));
 
         cartRepository.save(cart);

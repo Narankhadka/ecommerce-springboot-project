@@ -57,7 +57,7 @@ public class CategoryServiceIml implements CategoryService {
      categoryResponse.setContent(categoryDTOS);
      categoryResponse.setPageNumber(categoryPage.getNumber());
      categoryResponse.setPageSize(categoryPage.getSize());
-     categoryResponse.setTotalElement(categoryPage.getTotalElements());
+     categoryResponse.setTotalElements(categoryPage.getTotalElements());
      categoryResponse.setTotalPages(categoryPage.getTotalPages());
      categoryResponse.setLastPage(categoryPage.isLast());
 
@@ -90,21 +90,6 @@ public class CategoryServiceIml implements CategoryService {
                         new ResourceNotFoundException("Category", "categoryId", categoryId)
                 );
 
-        // Check if the name is unchanged
-        if (existing.getCategoryName().equals(categoryDTO.getCategoryName())) {
-            throw new APIException(
-                    "Category name is already '" + categoryDTO.getCategoryName() + "'. No update required."
-            );
-        }
-
-
-//        // Check for duplicate name
-//        Category duplicate = categoryRepository.findByCategoryName(categoryDTO.getCategoryName());
-//        if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {
-//            throw new APIException(
-//                    STR."Category with name '\{categoryDTO.getCategoryName()}' already exists with Id: \{duplicate.getCategoryId()}"
-//            );
-//        }
         // Check for duplicate name
         Category duplicate = categoryRepository.findByCategoryName(categoryDTO.getCategoryName());
         if (duplicate != null && !duplicate.getCategoryId().equals(categoryId)) {

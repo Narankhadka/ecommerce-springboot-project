@@ -82,7 +82,7 @@ public class AddressServiceImpl implements AddressService {
 
             Address updatedAddress = addressRepository.save(addressFromDatabase);
             User user = addressFromDatabase.getUser();
-            user.getAddresses().removeIf(address->address.getAddressId().equals(user));
+            user.getAddresses().removeIf(address->address.getAddressId().equals(addressId));
             user.getAddresses().add(updatedAddress);
             userRepository.save(user);
 
