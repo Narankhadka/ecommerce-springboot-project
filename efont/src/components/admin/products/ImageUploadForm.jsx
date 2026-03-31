@@ -5,6 +5,7 @@ import { Button } from '@mui/material';
 import toast from 'react-hot-toast';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateProductImageFromDashboard } from '../../../store/actions';
+import { checkIsAdmin } from '../../../utils/authUtils';
 
 const ImageUploadForm = ({ setOpen, product }) => {
     const [loader, setLoader] = useState(false);
@@ -14,7 +15,7 @@ const ImageUploadForm = ({ setOpen, product }) => {
     const dispatch = useDispatch();
 
     const { user } = useSelector((state) => state.auth);
-    const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
+    const isAdmin = checkIsAdmin(user);
 
     const onHandleImageChange = (e) => {
         const file = e.target.files[0];

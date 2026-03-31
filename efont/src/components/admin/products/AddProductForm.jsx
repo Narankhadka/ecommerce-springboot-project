@@ -9,6 +9,7 @@ import Spinners from '../../shared/Spinners';
 import SelectTextField from '../../shared/SelectTextField';
 import Skeleton from '../../shared/Skeleton';
 import ErrorPage from '../../shared/ErrorPage';
+import { checkIsAdmin } from '../../../utils/authUtils';
 
 const AddProductForm = ({ setOpen, product, update=false}) => {
 const [loader, setLoader] = useState(false);
@@ -16,7 +17,7 @@ const [selectedCategory, setSelectedCategory] = useState();
 const { categories } = useSelector((state) => state.products);
 const { categoryLoader, errorMessage } = useSelector((state) => state.errors);
 const { user } = useSelector((state) => state.auth);
-const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
+const isAdmin = checkIsAdmin(user);
 
 const dispatch = useDispatch();
     const {
@@ -30,6 +31,9 @@ const dispatch = useDispatch();
     });
 
     const saveProductHandler = (data) => {
+        console.log("USER FROM REDUX:", JSON.stringify(user));
+        console.log("IS ADMIN:", isAdmin);
+        console.log("RAW AUTH:", localStorage.getItem("auth"));
         if(!update) {
             // create new product logic
             const sendData = {
@@ -134,15 +138,17 @@ const dispatch = useDispatch();
             placeholder="Product Discount"
             register={register}
             errors={errors}
+            registerOptions={{ setValueAs: v => v === "" ? 0 : parseFloat(v) }}
           />
           <InputField
             label="Special Price"
             id="specialPrice"
             type="number"
             message="This field is required*"
-            placeholder="Product Discount"
+            placeholder="Product Special Price"
             register={register}
             errors={errors}
+            registerOptions={{ setValueAs: v => v === "" ? 0 : parseFloat(v) }}
           />
         </div>
 

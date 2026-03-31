@@ -322,50 +322,6 @@ export const stripePaymentConfirmation
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  KHALTI PAYMENT
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Step 1: Initiate Khalti session → backend calls Khalti API → returns payment_url + pidx */
-export const initiateKhaltiPayment = (amount, setLoading, toast) => async (dispatch) => {
-    try {
-        setLoading(true);
-        const { data } = await api.post("/payment/khalti/initiate", {
-            amount,
-            purchaseOrderName: "E-Commerce Order",
-        });
-        // Redirect browser to Khalti payment page
-        window.location.href = data.payment_url;
-    } catch (error) {
-        console.error(error);
-        toast.error(error?.response?.data?.message || "Failed to initiate Khalti payment");
-    } finally {
-        setLoading(false);
-    }
-};
-
-/** Step 2: Verify Khalti payment (called from confirmation page) and place order */
-export const verifyKhaltiAndPlaceOrder =
-    (pidx, addressId, setLoading, setError) => async (dispatch) => {
-        try {
-            setLoading(true);
-            const { data } = await api.post("/payment/khalti/verify", { pidx, addressId });
-            if (data) {
-                localStorage.removeItem("CHECKOUT_ADDRESS");
-                localStorage.removeItem("cartItems");
-                dispatch({ type: "REMOVE_CLIENT_SECRET_ADDRESS" });
-                dispatch({ type: "CLEAR_CART" });
-            }
-            return data;
-        } catch (error) {
-            console.error(error);
-            setError(error?.response?.data?.message || "Khalti verification failed");
-            return null;
-        } finally {
-            setLoading(false);
-        }
-    };
-
-// ─────────────────────────────────────────────────────────────────────────────
 //  eSEWA PAYMENT
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -409,38 +365,18 @@ export const verifyEsewaAndPlaceOrder =
         }
     };
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  CASH ON DELIVERY
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Place a COD order — no online payment needed */
-export const placeCodOrder =
-    (addressId, navigate, toast, setLoading) => async (dispatch) => {
-        try {
-            setLoading(true);
-            const sendData = {
-                addressId,
-                pgName: "COD",
-                pgPaymentId: "",
-                pgStatus: "Pending",
-                pgResponseMessage: "Cash on Delivery — payment on receipt",
-            };
-            const { data } = await api.post("/order/users/payments/COD", sendData);
-            if (data) {
-                localStorage.removeItem("CHECKOUT_ADDRESS");
-                localStorage.removeItem("cartItems");
-                dispatch({ type: "REMOVE_CLIENT_SECRET_ADDRESS" });
-                dispatch({ type: "CLEAR_CART" });
-                toast.success("Order placed! Pay on delivery.");
-                navigate("/order-confirm");
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error(error?.response?.data?.message || "Failed to place COD order");
-        } finally {
-            setLoading(false);
-        }
-    };
+export const fetchUserOrders = () => async (dispatch) => {
+    try {
+        dispatch({ type: "USER_ORDERS_LOADING" });
+        const { data } = await api.get("/orders/user");
+        dispatch({ type: "USER_ORDERS", payload: data });
+    } catch (error) {
+        dispatch({
+            type: "USER_ORDERS_ERROR",
+            payload: error?.response?.data?.message || "Failed to fetch orders",
+        });
+    }
+};
 
 export const analyticsAction = () => async (dispatch, getState) => {
         try {
@@ -527,7 +463,7 @@ export const dashboardProductsAction = (queryString, isAdmin) => async (dispatch
 };
 
 
-export const updateProductFromDashboard = 
+export const updateProductFromDashboard =
     (sendData, toast, reset, setLoader, setOpen, isAdmin) => async (dispatch) => {
     try {
         setLoader(true);
@@ -535,29 +471,27 @@ export const updateProductFromDashboard =
         await api.put(`${endpoint}${sendData.id}`, sendData);
         toast.success("Product update successful");
         reset();
-        setLoader(false);
         setOpen(false);
-        await dispatch(dashboardProductsAction());
+        await dispatch(dashboardProductsAction(undefined, isAdmin));
     } catch (error) {
         toast.error(error?.response?.data?.description || "Product update failed");
-     
+    } finally {
+        setLoader(false);
     }
 };
 
 
 
-export const addNewProductFromDashboard = 
-    (sendData, toast, reset, setLoader, setOpen, isAdmin) => async(dispatch, getState) => {
+export const addNewProductFromDashboard =
+    (sendData, toast, reset, setLoader, setOpen, isAdmin) => async (dispatch) => {
         try {
             setLoader(true);
             const endpoint = isAdmin ? "/admin/categories/" : "/seller/categories/";
-            await api.post(`${endpoint}${sendData.categoryId}/product`,
-                sendData
-            );
+            await api.post(`${endpoint}${sendData.categoryId}/product`, sendData);
             toast.success("Product created successfully");
             reset();
             setOpen(false);
-            await dispatch(dashboardProductsAction());
+            await dispatch(dashboardProductsAction(undefined, isAdmin));
         } catch (error) {
             console.error(error);
             toast.error(error?.response?.data?.description || "Product creation failed");
@@ -566,38 +500,37 @@ export const addNewProductFromDashboard =
         }
     }
 
-export const deleteProduct = 
-    (setLoader, productId, toast, setOpenDeleteModal, isAdmin) => async (dispatch, getState) => {
+export const deleteProduct =
+    (setLoader, productId, toast, setOpenDeleteModal, isAdmin) => async (dispatch) => {
     try {
-        setLoader(true)
+        setLoader(true);
         const endpoint = isAdmin ? "/admin/products/" : "/seller/products/";
         await api.delete(`${endpoint}${productId}`);
         toast.success("Product deleted successfully");
-        setLoader(false);
         setOpenDeleteModal(false);
-        await dispatch(dashboardProductsAction());
+        await dispatch(dashboardProductsAction(undefined, isAdmin));
     } catch (error) {
         console.log(error);
-        toast.error(
-            error?.response?.data?.message || "Some Error Occured"
-        )
+        toast.error(error?.response?.data?.message || "Some Error Occured");
+    } finally {
+        setLoader(false);
     }
 };
 
 
-export const updateProductImageFromDashboard = 
+export const updateProductImageFromDashboard =
     (formData, productId, toast, setLoader, setOpen, isAdmin) => async (dispatch) => {
     try {
         setLoader(true);
         const endpoint = isAdmin ? "/admin/products/" : "/seller/products/";
         await api.put(`${endpoint}${productId}/image`, formData);
         toast.success("Image upload successful");
-        setLoader(false);
         setOpen(false);
-        await dispatch(dashboardProductsAction());
+        await dispatch(dashboardProductsAction(undefined, isAdmin));
     } catch (error) {
         toast.error(error?.response?.data?.description || "Product Image upload failed");
-     
+    } finally {
+        setLoader(false);
     }
 };
 

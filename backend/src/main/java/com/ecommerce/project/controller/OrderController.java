@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -66,6 +67,13 @@ public class OrderController {
         Map<String, String> response = new HashMap<>();
         response.put("clientSecret", clientSecret);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/orders/user")
+    public ResponseEntity<List<OrderDTO>> getUserOrders() {
+        String emailId = authUtil.loggedInEmail();
+        List<OrderDTO> orders = orderService.getOrdersByUser(emailId);
+        return new ResponseEntity<>(orders, HttpStatus.OK);
     }
 
     @GetMapping("/admin/orders")

@@ -10,6 +10,7 @@ const InputField = ({
     min,
     value,
     placeholder,
+    registerOptions,
 }) => {
     return (
         <div className="flex flex-col gap-1 w-full">
@@ -46,7 +47,7 @@ const InputField = ({
                                 message: "Please enter a valid url"
                             }
                             : null,
-
+                    ...registerOptions,
                 })}
                 />
 

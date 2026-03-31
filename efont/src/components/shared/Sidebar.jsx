@@ -3,13 +3,14 @@ import { FaTachometerAlt } from 'react-icons/fa';
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom'
 import { adminNavigation, sellerNavigation } from '../../utils';
+import { checkIsAdmin } from '../../utils/authUtils';
 import classNames from 'classnames';
 
 const Sidebar = ({isProfileLayout = false}) => {
     const pathName = useLocation().pathname;
     const { user } = useSelector((state) => state.auth);
 
-    const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
+    const isAdmin = checkIsAdmin(user);
 
     const sideBarLayout = isAdmin ? adminNavigation : sellerNavigation;
     

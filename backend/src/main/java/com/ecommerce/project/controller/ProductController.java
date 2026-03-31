@@ -23,16 +23,22 @@ public class ProductController {
         this.productService = productService;
     }
 
-    //Get all products
+    //Get all products (with optional keyword and category filters)
     @GetMapping("/public/products")
     public ResponseEntity<ProductResponse> getAllProducts(
-            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER,required = false) Integer pageNumber,
-            @RequestParam(name = "pageSize",defaultValue = AppConstants.PAGE_SIZE,required = false)Integer pageSize,
-            @RequestParam(name = "sortBy",defaultValue = AppConstants.SORT_PRODUCTS_BY,required = false)String sortBy,
-            @RequestParam(name = "sortOrder",defaultValue = AppConstants.SORT_DIR,required = false)String sortOrder
-    ){
-       ProductResponse productResponse= productService.getAllProducts(pageNumber,pageSize,sortBy,sortOrder);
-       return  new ResponseEntity<>(productResponse , HttpStatus.OK);
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PRODUCTS_BY, required = false) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "category", required = false) String category
+    ) {
+        if ((keyword != null && !keyword.isBlank()) || (category != null && !category.isBlank())) {
+            ProductResponse productResponse = productService.searchProducts(keyword, category, pageNumber, pageSize, sortBy, sortOrder);
+            return new ResponseEntity<>(productResponse, HttpStatus.OK);
+        }
+        ProductResponse productResponse = productService.getAllProducts(pageNumber, pageSize, sortBy, sortOrder);
+        return new ResponseEntity<>(productResponse, HttpStatus.OK);
     }
 
 

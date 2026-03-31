@@ -5,22 +5,10 @@ import { addPaymentMethod, createUserCart } from '../../store/actions';
 
 const PAYMENT_OPTIONS = [
     {
-        value: 'Khalti',
-        label: 'Khalti',
-        description: 'Pay via Khalti digital wallet (sandbox)',
-        color: '#5C2D91',
-    },
-    {
         value: 'eSewa',
         label: 'eSewa',
         description: 'Pay via eSewa mobile wallet (sandbox)',
         color: '#60BB46',
-    },
-    {
-        value: 'COD',
-        label: 'Cash on Delivery',
-        description: 'Pay with cash when your order arrives',
-        color: '#F59E0B',
     },
 ];
 
@@ -29,6 +17,13 @@ const PaymentMethod = () => {
     const { paymentMethod } = useSelector((state) => state.payment);
     const { cart, cartId } = useSelector((state) => state.carts);
     const { errorMessage } = useSelector((state) => state.errors);
+
+    // Auto-select eSewa (the only payment method)
+    useEffect(() => {
+        if (!paymentMethod) {
+            dispatch(addPaymentMethod('eSewa'));
+        }
+    }, [dispatch, paymentMethod]);
 
     // Sync local cart to server when the user first reaches this step
     useEffect(() => {

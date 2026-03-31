@@ -1,6 +1,8 @@
 package com.ecommerce.project.controller;
 
-import com.ecommerce.project.payload.*;
+import com.ecommerce.project.payload.EsewaInitiateDTO;
+import com.ecommerce.project.payload.EsewaVerifyDTO;
+import com.ecommerce.project.payload.OrderDTO;
 import com.ecommerce.project.serviceInterface.OrderService;
 import com.ecommerce.project.util.AuthUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,17 +20,13 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Handles Khalti, eSewa, and Cash on Delivery payment flows.
+ * Handles eSewa payment flow.
  * All endpoints require authentication (JWT cookie).
  */
 @RestController
 @RequestMapping("/api/payment")
 public class
 PaymentController {
-
-    // ── Khalti sandbox credentials ──────────────────────────────────────────
-    @Value("${khalti.secret.key:test_secret_key_f59e8b7d18b4499ca40f68195a473d57}")
-    private String khaltiSecretKey;
 
     // ── eSewa sandbox credentials ───────────────────────────────────────────
     @Value("${esewa.product.code:EPAYTEST}")
@@ -48,103 +46,6 @@ PaymentController {
         this.restTemplate = restTemplate;
         this.orderService = orderService;
         this.authUtil = authUtil;
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  KHALTI
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Step 1: Initiate a Khalti payment session.
-     * Calls the Khalti sandbox API and returns the payment_url + pidx.
-     */
-    @PostMapping("/khalti/initiate")
-    public ResponseEntity<?> initiateKhaltiPayment(@RequestBody KhaltiInitiateDTO dto) {
-        try {
-            String purchaseOrderId = UUID.randomUUID().toString();
-
-            Map<String, Object> khaltiRequest = new HashMap<>();
-            khaltiRequest.put("return_url", frontendUrl + "/order-confirm/khalti");
-            khaltiRequest.put("website_url", frontendUrl);
-            // Khalti expects amount in paisa (1 NPR = 100 paisa)
-            khaltiRequest.put("amount", Math.round(dto.getAmount() * 100));
-            khaltiRequest.put("purchase_order_id", purchaseOrderId);
-            khaltiRequest.put("purchase_order_name",
-                    dto.getPurchaseOrderName() != null ? dto.getPurchaseOrderName() : "E-Commerce Order");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Key " + khaltiSecretKey);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(khaltiRequest, headers);
-
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                    "https://dev.khalti.com/api/v2/epayment/initiate/",
-                    entity,
-                    Map.class
-            );
-
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Failed to initiate Khalti payment: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
-        }
-    }
-
-    /**
-     * Step 2: Verify Khalti payment and place the order.
-     * Calls Khalti lookup API, then creates the order if payment is Completed.
-     */
-    @PostMapping("/khalti/verify")
-    public ResponseEntity<?> verifyKhaltiAndPlaceOrder(@RequestBody KhaltiVerifyDTO dto) {
-        try {
-            // ── Call Khalti lookup API ──────────────────────────────────────
-            Map<String, String> lookupRequest = new HashMap<>();
-            lookupRequest.put("pidx", dto.getPidx());
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Key " + khaltiSecretKey);
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<Map<String, String>> entity = new HttpEntity<>(lookupRequest, headers);
-
-            ResponseEntity<Map> lookupResponse = restTemplate.postForEntity(
-                    "https://dev.khalti.com/api/v2/epayment/lookup/",
-                    entity,
-                    Map.class
-            );
-
-            @SuppressWarnings("unchecked")
-            Map<String, Object> khaltiData = lookupResponse.getBody();
-
-            String status = khaltiData != null ? (String) khaltiData.get("status") : null;
-            if (!"Completed".equals(status)) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Khalti payment not completed. Status: " + status);
-                return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED).body(error);
-            }
-
-            String transactionId = (String) khaltiData.get("transaction_id");
-
-            // ── Place the order ─────────────────────────────────────────────
-            String emailId = authUtil.loggedInEmail();
-            OrderDTO order = orderService.placeOrder(
-                    emailId,
-                    dto.getAddressId(),
-                    "Khalti",
-                    "Khalti",
-                    transactionId,
-                    "Completed",
-                    "Payment successful via Khalti"
-            );
-
-            return ResponseEntity.ok(order);
-        } catch (Exception e) {
-            Map<String, String> error = new HashMap<>();
-            error.put("message", "Khalti verification failed: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
-        }
     }
 
     // ─────────────────────────────────────────────────────────────────────────

@@ -15,8 +15,10 @@ import Register from './components/auth/Register';
 import PrivateRoute from './components/PrivateRoute';
 import Checkout from './components/checkout/Checkout';
 import PaymentConfirmation from './components/checkout/PaymentConfirmation';
-import KhaltiConfirmation from './components/checkout/KhaltiConfirmation';
 import EsewaConfirmation from './components/checkout/EsewaConfirmation';
+import UserOrders from './components/profile/UserOrders';
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage';
+import ResetPasswordPage from './components/auth/ResetPasswordPage';
 import AdminLayout from './components/admin/AdminLayout';
 import Dashboard from './components/admin/dashboard/Dashboard';
 import AdminProducts from './components/admin/products/AdminProducts';
@@ -36,16 +38,15 @@ function App() {
           <Route path='/about' element={<About />} />
           <Route path='/contact' element={<Contact />} />
           <Route path='/cart' element={<Cart />} />
+          <Route path='/forgot-password' element={<ForgotPasswordPage />} />
+          <Route path='/reset-password' element={<ResetPasswordPage />} />
 
           {/* Protected: logged-in users only */}
           <Route path='/' element={<PrivateRoute />}>
             <Route path='/checkout' element={<Checkout />} />
-            {/* COD / generic confirmation */}
             <Route path='/order-confirm' element={<PaymentConfirmation />} />
-            {/* Khalti redirect callback */}
-            <Route path='/order-confirm/khalti' element={<KhaltiConfirmation />} />
-            {/* eSewa redirect callback */}
             <Route path='/order-confirm/esewa' element={<EsewaConfirmation />} />
+            <Route path='/profile/orders' element={<UserOrders />} />
           </Route>
 
           {/* Protected: only for unauthenticated users */}

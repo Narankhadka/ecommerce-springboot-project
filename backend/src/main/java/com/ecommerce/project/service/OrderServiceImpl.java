@@ -86,7 +86,11 @@ public class OrderServiceImpl implements OrderService {
 
         orderItems = orderItemRepository.saveAll(orderItems);
 
-        cart.getCartItems().forEach(item -> {
+        // Snapshot the list before iterating — calling deleteProductFromCart() inside
+        // the loop flushes the Hibernate session which can invalidate the live
+        // PersistentBag and cause a ConcurrentModificationException.
+        List<CartItem> itemsToProcess = new ArrayList<>(cart.getCartItems());
+        itemsToProcess.forEach(item -> {
             int quantity = item.getQuantity();
             Product product = item.getProduct();
 
@@ -137,6 +141,20 @@ public class OrderServiceImpl implements OrderService {
         orderResponse.setLastPage(pageOrders.isLast());
 
         return orderResponse;
+    }
+
+    @Override
+    public List<OrderDTO> getOrdersByUser(String email) {
+        List<Order> orders = orderRepository.findByEmailOrderByOrderDateDesc(email);
+        return orders.stream()
+                .map(order -> {
+                    OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
+                    if (order.getAddress() != null) {
+                        orderDTO.setAddressId(order.getAddress().getAddressId());
+                    }
+                    return orderDTO;
+                })
+                .toList();
     }
 
     @Override

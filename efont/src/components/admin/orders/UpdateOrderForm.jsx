@@ -4,6 +4,7 @@ import { FaSpinner } from 'react-icons/fa';
 import Spinners from '../../shared/Spinners';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateOrderStatusFromDashboard } from '../../../store/actions';
+import { checkIsAdmin } from '../../../utils/authUtils';
 import toast from 'react-hot-toast';
 
 const ORDER_STATUSES = [
@@ -21,7 +22,7 @@ const UpdateOrderForm = ({ setOpen, selectedId, selectedItem, loader, setLoader}
     const dispatch = useDispatch();
 
     const { user } = useSelector((state) => state.auth);
-    const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
+    const isAdmin = checkIsAdmin(user);
 
     const updateOrderStatus = (e) => {
         e.preventDefault();

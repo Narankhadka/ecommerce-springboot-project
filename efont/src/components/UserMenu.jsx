@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import BackDrop from './BackDrop';
 import { logOutUser } from '../store/actions';
+import { checkIsAdmin, checkIsSeller } from '../utils/authUtils';
 
 const UserMenu = () => {
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -15,8 +16,8 @@ const UserMenu = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const isAdmin = user && user?.roles.includes("ROLE_ADMIN");
-    const isSeller = user && user?.roles.includes("ROLE_SELLER");
+    const isAdmin = checkIsAdmin(user);
+    const isSeller = checkIsSeller(user);
 
     const handleClick = (event) => {
       setAnchorEl(event.currentTarget);

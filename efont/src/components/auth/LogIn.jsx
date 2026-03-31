@@ -63,6 +63,14 @@ const LogIn = () => {
                     />
             </div>
 
+            <div className="flex justify-end mt-1">
+              <Link
+                className="text-xs text-slate-500 hover:text-black underline"
+                to="/forgot-password">
+                Forgot Password?
+              </Link>
+            </div>
+
             <button
                 disabled={loader}
                 className="bg-button-gradient flex gap-2 items-center justify-center font-semibold text-white w-full py-2 hover:text-slate-400 transition-colors duration-100 rounded-xs my-3"
@@ -81,7 +89,7 @@ const LogIn = () => {
               <Link
                 className="font-semibold underline hover:text-black"
                 to="/register">
-              <span> SignUp</span></Link>  
+              <span> SignUp</span></Link>
             </p>
             </form>
         </div>

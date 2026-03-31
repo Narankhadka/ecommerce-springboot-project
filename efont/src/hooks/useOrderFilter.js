@@ -2,13 +2,14 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import { getOrdersForDashboard } from "../store/actions";
+import { checkIsAdmin } from "../utils/authUtils";
 
 const useOrderFilter = () => {
     const [searchParams] = useSearchParams();
     const dispatch = useDispatch();
 
     const { user } = useSelector((state) => state.auth);
-    const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
+    const isAdmin = checkIsAdmin(user);
 
     useEffect(() => {
         const params = new URLSearchParams();

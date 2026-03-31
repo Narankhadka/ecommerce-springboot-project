@@ -8,9 +8,7 @@ import Skeleton from '../shared/Skeleton';
 import ErrorPage from '../shared/ErrorPage';
 import PaymentMethod from './PaymentMethod';
 import OrderSummary from './OrderSummary';
-import KhaltiPayment from './KhaltiPayment';
 import EsewaPayment from './EsewaPayment';
-import CodPayment from './CodPayment';
 
 const steps = ['Address', 'Payment Method', 'Order Summary', 'Payment'];
 
@@ -53,20 +51,7 @@ const Checkout = () => {
         (activeStep === 1 && !paymentMethod);
 
     const renderPaymentStep = () => {
-        switch (paymentMethod) {
-            case 'Khalti':
-                return <KhaltiPayment />;
-            case 'eSewa':
-                return <EsewaPayment />;
-            case 'COD':
-                return <CodPayment />;
-            default:
-                return (
-                    <div className='max-w-md mx-auto p-6 text-center text-gray-500 mt-10'>
-                        No payment method selected.
-                    </div>
-                );
-        }
+        return <EsewaPayment />;
     };
 
     return (

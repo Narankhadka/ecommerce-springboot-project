@@ -69,8 +69,8 @@ public class ProductServiceImpl implements ProductService {
             Product product = modelMapper.map(productDTO, Product.class);
             product.setImage("default.png");
             product.setCategory(category);
-            double specialPrice = product.getPrice() -
-                    ((productDTO.getDiscount() * 0.01) * productDTO.getPrice());
+            double discount = productDTO.getDiscount() != null ? productDTO.getDiscount() : 0.0;
+            double specialPrice = product.getPrice() - ((discount * 0.01) * product.getPrice());
             product.setSpecialPrice(specialPrice);
             Product savedProduct = productRepository.save(product);
 
@@ -107,6 +107,25 @@ public class ProductServiceImpl implements ProductService {
     }
 
 
+
+    @Override
+    public ProductResponse searchProducts(String keyword, String categoryName, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+
+        String keywordParam = (keyword == null || keyword.isBlank()) ? null : keyword;
+        String categoryParam = (categoryName == null || categoryName.isBlank()) ? null : categoryName;
+
+        Page<Product> pageProducts = productRepository.findByFilters(keywordParam, categoryParam, pageDetails);
+        List<ProductDTO> productDTOS = pageProducts.getContent().stream()
+                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .toList();
+
+        return getProductResponse(pageProducts, productDTOS);
+    }
 
     @Override
     public ProductResponse searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
@@ -184,8 +203,8 @@ public class ProductServiceImpl implements ProductService {
         productFromDb.setDiscount(product.getDiscount());
         productFromDb.setPrice((product.getPrice()));
 
-        double specialPrice= product.getPrice()-
-                ((product.getDiscount() * 0.01)*product.getPrice());
+        double discount = product.getDiscount();
+        double specialPrice = product.getPrice() - ((discount * 0.01) * product.getPrice());
         product.setSpecialPrice(specialPrice);
 
         productFromDb.setSpecialPrice(specialPrice);

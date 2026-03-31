@@ -1,11 +1,12 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { checkIsAdmin, checkIsSeller } from '../utils/authUtils';
 
 const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
     const { user } = useSelector((state) => state.auth);
-    const isAdmin = user && user?.roles?.includes("ROLE_ADMIN");
-    const isSeller = user && user?.roles?.includes("ROLE_SELLER");
+    const isAdmin = checkIsAdmin(user);
+    const isSeller = checkIsSeller(user);
     const location = useLocation();
 
     // Public-only pages (login / register) — redirect logged-in users to home

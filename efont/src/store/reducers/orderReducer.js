@@ -1,6 +1,9 @@
 const initialState = {
     adminOrder: null,
     pagination: {},
+    userOrders: [],
+    userOrdersLoading: false,
+    userOrdersError: null,
 };
 
 export const orderReducer = (state = initialState, action) => {
@@ -18,6 +21,12 @@ export const orderReducer = (state = initialState, action) => {
                     lastPage: action.lastPage,
                 },
             };
+        case "USER_ORDERS_LOADING":
+            return { ...state, userOrdersLoading: true, userOrdersError: null };
+        case "USER_ORDERS":
+            return { ...state, userOrdersLoading: false, userOrders: action.payload };
+        case "USER_ORDERS_ERROR":
+            return { ...state, userOrdersLoading: false, userOrdersError: action.payload };
         default:
             return state;
     }

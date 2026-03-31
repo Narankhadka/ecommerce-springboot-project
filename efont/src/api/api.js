@@ -7,15 +7,18 @@ const api = axios.create({
 });
 
 /**
- * Extracts the raw JWT value from the Set-Cookie string stored in localStorage.
+ * Extracts the raw JWT from whatever shape is stored in localStorage.
  *
- * The backend stores the token as a full cookie string, e.g.:
- *   "springBootEcom=eyJhbGci...; Path=/api; Max-Age=86400; HttpOnly=false"
- *
- * We extract only the token portion (between '=' and the first ';').
+ * Handles two cases:
+ *  1. Raw JWT  — "eyJhbGci..."  (already the token, return directly)
+ *  2. Cookie string — "springBootEcom=eyJhbGci...; Path=/api; Max-Age=86400"
+ *     (parse out the value between '=' and the first ';')
  */
 function extractJwtFromCookieString(cookieStr) {
     if (!cookieStr || typeof cookieStr !== "string") return null;
+    // Case 1: already a raw JWT
+    if (cookieStr.startsWith("eyJ")) return cookieStr.trim();
+    // Case 2: full cookie string
     const eqIdx = cookieStr.indexOf("=");
     if (eqIdx === -1) return null;
     const scIdx = cookieStr.indexOf(";", eqIdx);
@@ -82,6 +85,8 @@ api.interceptors.response.use(
                     window.location.href = "/login";
                 }
             }, 1500);
+        } else if (error?.response?.status === 403) {
+            toast.error("Access Denied: you don't have permission to perform this action.", { duration: 4000 });
         }
         return Promise.reject(error);
     }
