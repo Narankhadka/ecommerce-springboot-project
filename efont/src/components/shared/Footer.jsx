@@ -11,7 +11,7 @@ const Footer = () => {
                     <div>
                         <div className='flex items-center text-white text-xl font-bold mb-3'>
                             <FaStore className='mr-2 text-2xl' />
-                            <span>Naran Khadka</span>
+                            <span>SabaikoPasal</span>
                         </div>
                         <p className='text-sm text-gray-400'>
                             Your one-stop destination for quality products.
@@ -52,7 +52,7 @@ const Footer = () => {
             </div>
 
             <div className='border-t border-gray-800 py-4 text-center text-sm text-gray-500'>
-                © {new Date().getFullYear()} Naran Khadka. All rights reserved.
+                © {new Date().getFullYear()} SabaikoPasal. All rights reserved.
             </div>
         </footer>
     );

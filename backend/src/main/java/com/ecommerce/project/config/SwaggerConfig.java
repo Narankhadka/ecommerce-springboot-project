@@ -34,14 +34,14 @@ public class SwaggerConfig {
                         .title("Spring Boot eCommerce API")
                         .version("1.0.0")
                         .description("This is a Spring Boot Project for eCommerce")
-                        .license(new License().name("Apache 2.0").url("https://narankhadka.com.np"))
+                        .license(new License().name("Apache 2.0").url("https://sabaikopasal.com.np"))
                         .contact(new Contact()
-                                .name("Naran khadka")
+                                .name("SabaikoPasal")
                                 .email("khadkan855@gmail.com")
-                                .url("https://github.com/narankhadka")))
+                                .url("https://github.com/SabaikoPasal")))
                 .externalDocs(new ExternalDocumentation()
                         .description("Project Documentation API")
-                        .url("https://github.com/narankhadka"))
+                        .url("https://github.com/SabaikoPasal"))
                 .components(new Components().addSecuritySchemes("Bearer Authentication", bearerScheme))
                 .addSecurityItem(bearerRequirement) ;
 

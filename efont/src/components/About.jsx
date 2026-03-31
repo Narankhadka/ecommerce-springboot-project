@@ -34,7 +34,7 @@ const About = () => {
 
             <div className='flex flex-col lg:flex-row justify-between items-center mb-12 gap-8'>
                 <div className='w-full lg:w-1/2 text-center lg:text-left'>
-                    <h2 className='text-2xl font-semibold text-gray-800 mb-3'>Naran Khadka</h2>
+                    <h2 className='text-2xl font-semibold text-gray-800 mb-3'>SabaikoPasal</h2>
                     <p className='text-lg mb-4 text-gray-600'>
                         Welcome to our e-commerce store! We are dedicated to providing the best products
                         and services to our customers across Nepal. Our mission is to offer a seamless
@@ -49,7 +49,7 @@ const About = () => {
                 <div className='w-full lg:w-1/2'>
                     <img
                         src='https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=600'
-                        alt='About Naran Khadka Store'
+                        alt='About SabaikoPasal Store'
                         className='w-full h-auto rounded-lg shadow-lg transform transition-transform duration-300 hover:scale-105'
                     />
                 </div>
