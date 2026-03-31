@@ -3,10 +3,11 @@ package com.ecommerce.project.service;
 import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Category;
+import com.ecommerce.project.model.Product;
 import com.ecommerce.project.payload.CategoryDTO;
 import com.ecommerce.project.payload.CategoryResponse;
 import com.ecommerce.project.repositories.CategoryRepository;
-
+import com.ecommerce.project.repositories.ProductRepository;
 import com.ecommerce.project.serviceInterface.CategoryService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +22,17 @@ import java.util.List;
 @Service
 public class CategoryServiceIml implements CategoryService {
 
-   private  final CategoryRepository categoryRepository;
-
-
+   private final CategoryRepository categoryRepository;
+   private final ProductRepository productRepository;
    private final ModelMapper modelMapper;
 
    @Autowired
-    public CategoryServiceIml(CategoryRepository categoryRepository, ModelMapper modelMapper) {
+    public CategoryServiceIml(CategoryRepository categoryRepository,
+                               ProductRepository productRepository,
+                               ModelMapper modelMapper) {
         this.categoryRepository = categoryRepository;
-       this.modelMapper = modelMapper;
+        this.productRepository = productRepository;
+        this.modelMapper = modelMapper;
    }
 
 
@@ -113,10 +116,26 @@ public class CategoryServiceIml implements CategoryService {
     @Override
     public CategoryDTO deleteCategory(Long categoryId) {
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Category" , "categoryId",categoryId));
-        categoryRepository.delete(category);
+                .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
-        return modelMapper.map(category,CategoryDTO.class);
+        // Block delete if any active products still belong to this category
+        List<Product> activeProducts = productRepository.findByCategoryAndActiveTrue(category);
+        if (!activeProducts.isEmpty()) {
+            throw new APIException(
+                "Cannot delete category '" + category.getCategoryName() +
+                "' — it has " + activeProducts.size() + " active product(s). " +
+                "Delete all products in this category first."
+            );
+        }
+
+        // Detach soft-deleted products from this category before deleting,
+        // otherwise the products.category_id FK blocks the category delete.
+        List<Product> inactiveProducts = productRepository.findByCategory(category);
+        inactiveProducts.forEach(p -> p.setCategory(null));
+        productRepository.saveAll(inactiveProducts);
+
+        categoryRepository.delete(category);
+        return modelMapper.map(category, CategoryDTO.class);
     }
 
 

@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -50,6 +51,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductDTO addProduct(Long categoryId,  ProductDTO productDTO) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(() ->
                 new ResourceNotFoundException("Category", "categoryId", categoryId));
@@ -92,7 +94,7 @@ public class ProductServiceImpl implements ProductService {
                 :Sort.by(sortBy).descending();
 
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
-        Page<Product>pageProducts=productRepository.findAll(pageDetails);
+        Page<Product>pageProducts=productRepository.findByActiveTrue(pageDetails);
 
         List<Product>products=pageProducts.getContent();
 
@@ -138,7 +140,7 @@ public class ProductServiceImpl implements ProductService {
                 :Sort.by(sortBy).descending();
 
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
-        Page<Product>pageProducts= productRepository.findByCategoryOrderByPriceAsc(category,pageDetails);
+        Page<Product>pageProducts= productRepository.findByCategoryAndActiveTrueOrderByPriceAsc(category,pageDetails);
            List<Product>products= pageProducts.getContent();
 
         List<ProductDTO> productDTOS= products.stream().
@@ -159,7 +161,7 @@ public class ProductServiceImpl implements ProductService {
                 :Sort.by(sortBy).descending();
 
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
-        Page<Product>pageProducts= productRepository.findByProductNameLikeIgnoreCase(keyword,pageDetails);;
+        Page<Product>pageProducts= productRepository.findByProductNameLikeIgnoreCaseAndActiveTrue(keyword,pageDetails);
 
         List<Product>products=pageProducts.getContent();
         List<ProductDTO> productDTOS= products.stream().
@@ -187,6 +189,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
 //        Product existing =productRepository.findById(productId).orElseThrow(()->new ResourceNotFoundException("Product","productId",productId));
 
@@ -233,16 +236,19 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductDTO deleteProduct(Long productId) {
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product" , "productId",productId));
 
-        //Delete
+        // Remove from all active carts
         List<Cart>carts=cartRepository.findCartsByProductId(productId);
         carts.forEach( cart -> { cartService.deleteProductFromCart(cart.getCartId(),productId);});
 
-        productRepository.delete(product);
+        // Soft delete — mark inactive so order history is preserved
+        product.setActive(false);
+        productRepository.save(product);
 
         return modelMapper.map(product, ProductDTO.class);
     }

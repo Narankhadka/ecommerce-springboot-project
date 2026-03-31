@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserOrders } from '../../store/actions';
+import { formatNPR } from '../../utils/formatPrice';
 
 const statusColors = {
     Accepted: 'bg-blue-100 text-blue-700',
@@ -80,8 +81,7 @@ const UserOrders = () => {
                                             {item.product?.productName || 'Product'}
                                         </p>
                                         <p className='text-sm text-gray-500'>
-                                            Qty: {item.quantity} &nbsp;·&nbsp; Rs.{' '}
-                                            {item.orderedProductPrice?.toFixed(2)}
+                                            Qty: {item.quantity} &nbsp;·&nbsp; {formatNPR(item.orderedProductPrice)}
                                         </p>
                                     </div>
                                 </div>
@@ -93,7 +93,7 @@ const UserOrders = () => {
                                 Payment: {order.payment?.paymentMethod}
                             </span>
                             <span className='font-semibold'>
-                                Total: Rs. {order.totalAmount?.toFixed(2)}
+                                Total: {formatNPR(order.totalAmount)}
                             </span>
                         </div>
                     </div>

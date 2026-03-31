@@ -1,5 +1,6 @@
 import { FaEdit, FaEye, FaImage, FaTrashAlt } from "react-icons/fa";
 import { MdOutlineEmail } from "react-icons/md";
+import { formatNPR } from "../../utils/formatPrice";
 
 export const adminProductTableColumn = (
   handleEdit,
@@ -45,6 +46,7 @@ export const adminProductTableColumn = (
     headerClassName: "text-black font-semibold border",
     cellClassName: "text-slate-700 font-normal border",
     renderHeader: (params) => <span className="text-center">Price</span>,
+    renderCell: (params) => <span>{formatNPR(params.row.price)}</span>,
   },
   {
     disableColumnMenu: true,
@@ -71,6 +73,7 @@ export const adminProductTableColumn = (
     renderHeader: (params) => (
       <span className="text-center">Special Price</span>
     ),
+    renderCell: (params) => <span>{formatNPR(params.row.specialPrice)}</span>,
   },
   {
     sortable: false,

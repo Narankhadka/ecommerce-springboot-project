@@ -3,6 +3,7 @@ import { Divider } from '@mui/material';
 import { useState } from 'react'
 import Status from './Status';
 import { MdClose, MdDone } from 'react-icons/md';
+import { formatNPR } from '../../utils/formatPrice';
 
 function ProductViewModal({open, setOpen, product, isAvailable}) {
   
@@ -42,16 +43,15 @@ function ProductViewModal({open, setOpen, product, isAvailable}) {
                   {specialPrice ? (
                     <div className="flex items-center gap-2">
                       <span className="text-gray-400 line-through">
-                        ${Number(price).toFixed(2)}
+                        {formatNPR(price)}
                       </span>
                       <span className="sm:text-xl font-semibold text-slate-700">
-                        ${Number(specialPrice).toFixed(2)}
+                        {formatNPR(specialPrice)}
                       </span>
                     </div>
                   ) : (
                     <span className="text-xl font-bold">
-                      {" "}
-                      ${Number(price).toFixed(2)}
+                      {formatNPR(price)}
                     </span>
                   )}
 

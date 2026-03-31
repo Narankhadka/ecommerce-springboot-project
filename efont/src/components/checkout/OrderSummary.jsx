@@ -1,5 +1,5 @@
 import React from 'react'
-import { formatPriceCalculation } from '../../utils/formatPrice'
+import { formatNPR } from '../../utils/formatPrice'
 
 const OrderSummary = ({ totalPrice, cart, address, paymentMethod}) => {
   return (
@@ -57,9 +57,7 @@ const OrderSummary = ({ totalPrice, cart, address, paymentMethod}) => {
                     <div className='text-gray-500'>
                         <p>{item?.productName}</p>
                         <p>
-                {item?.quantity} x ${item?.specialPrice} = ${
-                    formatPriceCalculation(item?.quantity, item?.specialPrice)
-                }
+                {item?.quantity} x {formatNPR(item?.specialPrice)} = {formatNPR(Number(item?.quantity) * Number(item?.specialPrice))}
                         </p>
                     </div>
                     </div>
@@ -77,15 +75,15 @@ const OrderSummary = ({ totalPrice, cart, address, paymentMethod}) => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Products</span>
-                <span>${formatPriceCalculation(totalPrice, 1)}</span>
+                <span>{formatNPR(totalPrice)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Tax (0%)</span>
-                <span>$0.00</span>
+                <span>रू 0</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>SubTotal</span>
-                <span>${formatPriceCalculation(totalPrice, 1)}</span>
+                <span>{formatNPR(totalPrice)}</span>
               </div>
             </div>
         </div>
