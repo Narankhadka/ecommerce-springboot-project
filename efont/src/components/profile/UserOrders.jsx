@@ -1,14 +1,85 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchUserOrders } from '../../store/actions';
 import { formatNPR } from '../../utils/formatPrice';
 
 const statusColors = {
+    Placed: 'bg-blue-100 text-blue-700',
     Accepted: 'bg-blue-100 text-blue-700',
     Processing: 'bg-yellow-100 text-yellow-700',
     Shipped: 'bg-purple-100 text-purple-700',
+    'Out for Delivery': 'bg-orange-100 text-orange-700',
     Delivered: 'bg-green-100 text-green-700',
     Cancelled: 'bg-red-100 text-red-700',
+};
+
+const TIMELINE_STEPS = ['Placed', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered'];
+
+const getStepIndex = (status) => {
+    if (status === 'Accepted') return 0;
+    return TIMELINE_STEPS.indexOf(status);
+};
+
+const OrderTimeline = ({ status }) => {
+    if (status === 'Cancelled') {
+        return (
+            <div className='mt-4 pt-3 border-t'>
+                <p className='text-red-500 font-semibold text-sm text-center'>Order Cancelled</p>
+            </div>
+        );
+    }
+
+    const currentIndex = getStepIndex(status);
+
+    return (
+        <div className='mt-4 pt-3 border-t'>
+            <div className='flex items-start'>
+                {TIMELINE_STEPS.map((step, index) => (
+                    <React.Fragment key={step}>
+                        <div className='flex flex-col items-center'>
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center border-2 flex-shrink-0 ${
+                                index < currentIndex
+                                    ? 'bg-green-500 border-green-500'
+                                    : index === currentIndex
+                                    ? 'bg-green-500 border-green-500'
+                                    : 'bg-white border-gray-300'
+                            }`}>
+                                {index <= currentIndex ? (
+                                    <svg
+                                        className='w-4 h-4 text-white'
+                                        fill='none'
+                                        viewBox='0 0 24 24'
+                                        stroke='currentColor'
+                                    >
+                                        <path
+                                            strokeLinecap='round'
+                                            strokeLinejoin='round'
+                                            strokeWidth={3}
+                                            d='M5 13l4 4L19 7'
+                                        />
+                                    </svg>
+                                ) : (
+                                    <span className='text-gray-400 text-xs font-semibold'>{index + 1}</span>
+                                )}
+                            </div>
+                            <span className={`text-xs mt-1 text-center w-16 leading-tight ${
+                                index <= currentIndex ? 'text-green-600 font-semibold' : 'text-gray-400'
+                            }`}>
+                                {step}
+                            </span>
+                        </div>
+
+                        {index < TIMELINE_STEPS.length - 1 && (
+                            <div className={`flex-1 h-0.5 mt-3.5 mx-1 ${
+                                index < currentIndex ? 'bg-green-500' : 'bg-gray-200'
+                            }`} />
+                        )}
+                    </React.Fragment>
+                ))}
+            </div>
+        </div>
+    );
 };
 
 const UserOrders = () => {
@@ -22,7 +93,7 @@ const UserOrders = () => {
     if (userOrdersLoading) {
         return (
             <div className='min-h-[60vh] flex items-center justify-center'>
-                <p className='text-gray-500'>Loading your orders…</p>
+                <p className='text-gray-500'>Loading your orders...</p>
             </div>
         );
     }
@@ -71,7 +142,11 @@ const UserOrders = () => {
                                 <div key={item.orderItemId} className='flex items-center gap-4 py-3'>
                                     {item.product?.image && (
                                         <img
-                                            src={item.product.image}
+                                            src={
+                                                item.product.image?.startsWith('http')
+                                                    ? item.product.image
+                                                    : `${import.meta.env.VITE_BACK_END_URL}/images/${item.product.image}`
+                                            }
                                             alt={item.product.productName}
                                             className='w-16 h-16 object-cover rounded'
                                         />
@@ -81,7 +156,7 @@ const UserOrders = () => {
                                             {item.product?.productName || 'Product'}
                                         </p>
                                         <p className='text-sm text-gray-500'>
-                                            Qty: {item.quantity} &nbsp;·&nbsp; {formatNPR(item.orderedProductPrice)}
+                                            Qty: {item.quantity} &nbsp;&middot;&nbsp; {formatNPR(item.orderedProductPrice)}
                                         </p>
                                     </div>
                                 </div>
@@ -96,6 +171,8 @@ const UserOrders = () => {
                                 Total: {formatNPR(order.totalAmount)}
                             </span>
                         </div>
+
+                        <OrderTimeline status={order.orderStatus} />
                     </div>
                 ))}
             </div>

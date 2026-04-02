@@ -3,15 +3,8 @@ import { Link } from 'react-router-dom';
 import { MdLockReset } from 'react-icons/md';
 import api from '../../api/api';
 
-const ROLES = [
-    { value: 'user',   label: 'Customer' },
-    { value: 'seller', label: 'Seller' },
-    { value: 'admin',  label: 'Admin' },
-];
-
 const ForgotPasswordPage = () => {
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState('user');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState('');
@@ -21,7 +14,7 @@ const ForgotPasswordPage = () => {
         setError('');
         setLoading(true);
         try {
-            await api.post('/auth/forgot-password', { email: email.trim(), role });
+            await api.post('/auth/forgot-password', { email: email.trim(), role: 'user' });
             setSubmitted(true);
         } catch (err) {
             setError(err?.response?.data?.message || 'Something went wrong. Please try again.');
@@ -67,7 +60,7 @@ const ForgotPasswordPage = () => {
                         Forgot Password
                     </h1>
                     <p className='text-sm text-gray-500 text-center'>
-                        Enter your email and account type. We'll send you a reset link.
+                        Enter your email address and we'll send you a reset link.
                     </p>
                 </div>
 
@@ -87,24 +80,6 @@ const ForgotPasswordPage = () => {
                             placeholder='Enter your email'
                             className='border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400'
                         />
-                    </div>
-
-                    <div className='flex flex-col gap-1'>
-                        <label className='text-sm font-semibold text-slate-700' htmlFor='fp-role'>
-                            Account Type <span className='text-red-500'>*</span>
-                        </label>
-                        <select
-                            id='fp-role'
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className='border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white'
-                        >
-                            {ROLES.map((r) => (
-                                <option key={r.value} value={r.value}>
-                                    {r.label}
-                                </option>
-                            ))}
-                        </select>
                     </div>
 
                     {error && (

@@ -10,10 +10,13 @@ import SelectTextField from '../../shared/SelectTextField';
 import Skeleton from '../../shared/Skeleton';
 import ErrorPage from '../../shared/ErrorPage';
 import { checkIsAdmin } from '../../../utils/authUtils';
+import api from '../../../api/api';
 
 const AddProductForm = ({ setOpen, product, update=false}) => {
 const [loader, setLoader] = useState(false);
 const [selectedCategory, setSelectedCategory] = useState();
+const [sellers, setSellers] = useState([]);
+const [selectedSeller, setSelectedSeller] = useState(null);
 const { categories } = useSelector((state) => state.products);
 const { categoryLoader, errorMessage } = useSelector((state) => state.errors);
 const { user } = useSelector((state) => state.auth);
@@ -31,14 +34,12 @@ const dispatch = useDispatch();
     });
 
     const saveProductHandler = (data) => {
-        console.log("USER FROM REDUX:", JSON.stringify(user));
-        console.log("IS ADMIN:", isAdmin);
-        console.log("RAW AUTH:", localStorage.getItem("auth"));
         if(!update) {
             // create new product logic
             const sendData = {
                 ...data,
                 categoryId: selectedCategory.categoryId,
+                ...(isAdmin && selectedSeller ? { sellerId: selectedSeller.userId } : {}),
             };
             dispatch(addNewProductFromDashboard(
                 sendData, toast, reset, setLoader, setOpen, isAdmin
@@ -70,6 +71,19 @@ const dispatch = useDispatch();
             dispatch(fetchCategories());
         }
     }, [dispatch, update]);
+
+    useEffect(() => {
+        if (isAdmin && !update) {
+            api.get('/auth/sellers?pageSize=100')
+                .then(({ data }) => {
+                    setSellers(data.content || []);
+                    if (data.content?.length > 0) {
+                        setSelectedSeller(data.content[0]);
+                    }
+                })
+                .catch(() => {});
+        }
+    }, [isAdmin, update]);
 
     useEffect(() => {
         if (!categoryLoader && categories) {
@@ -106,8 +120,30 @@ const dispatch = useDispatch();
                 )}
             </div>
 
+            {isAdmin && !update && sellers.length > 0 && (
+                <div className="flex flex-col gap-2 w-full">
+                    <label className="font-semibold text-sm text-slate-800">
+                        Assign Seller
+                    </label>
+                    <select
+                        className="px-4 py-2 w-full border border-slate-700 outline-hidden bg-transparent text-slate-800 rounded-md text-sm"
+                        value={selectedSeller?.userId ?? ''}
+                        onChange={(e) => {
+                            const found = sellers.find(s => s.userId === Number(e.target.value));
+                            setSelectedSeller(found || null);
+                        }}
+                    >
+                        {sellers.map((s) => (
+                            <option key={s.userId} value={s.userId}>
+                                {s.userName} ({s.email})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             <div className='flex md:flex-row flex-col gap-4 w-full'>
-                <InputField 
+                <InputField
                     label="Price"
                     required
                     id="price"
@@ -118,7 +154,7 @@ const dispatch = useDispatch();
                     errors={errors}
                     />
 
-                    <InputField 
+                    <InputField
                     label="Quantity"
                     required
                     id="quantity"
@@ -127,6 +163,7 @@ const dispatch = useDispatch();
                     register={register}
                     placeholder="Product Quantity"
                     errors={errors}
+                    registerOptions={{ min: { value: 0, message: "Quantity cannot be negative" } }}
                     />
             </div>
         <div className="flex md:flex-row flex-col gap-4 w-full">

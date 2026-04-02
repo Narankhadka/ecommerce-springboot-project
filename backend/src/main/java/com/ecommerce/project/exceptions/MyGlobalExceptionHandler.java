@@ -4,6 +4,7 @@ package com.ecommerce.project.exceptions;
 
 import com.ecommerce.project.payload.APIResponse;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -80,6 +81,13 @@ public class MyGlobalExceptionHandler {
         String message = e.getMessage();
         APIResponse apiException=new APIResponse(message,false);
         return new ResponseEntity<>(apiException,HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<APIResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        APIResponse response = new APIResponse(
+                "Cannot delete: this record is referenced by other data in the system.", false);
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

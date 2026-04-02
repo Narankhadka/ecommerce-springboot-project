@@ -2,6 +2,7 @@ import { Skeleton } from '@mui/material';
 import { PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import React from 'react'
 import { useState } from 'react';
+import { formatNPR } from '../../utils/formatPrice';
 
 const PaymentForm = ({ clientSecret, totalPrice }) => {
     const stripe = useStripe();
@@ -51,7 +52,7 @@ const PaymentForm = ({ clientSecret, totalPrice }) => {
             <button
                 className='text-white w-full px-5 py-[10px] bg-black mt-2 rounded-md font-bold disabled:opacity-50 disabled:animate-pulse'
                 disabled={!stripe || isLoading}>
-                    {!isLoading ? `Pay $${Number(totalPrice).toFixed(2)}`
+                    {!isLoading ? `Pay ${formatNPR(totalPrice)}`
                             : "Processing"}
             </button>
             </>

@@ -105,8 +105,23 @@ public class AuthController {
         Set<String> strRoles = signupRequest.getRoles();
         Set<Role> roles = new HashSet<>();
 
+        if (strRoles != null) {
+            boolean hasRestrictedRole =
+                    strRoles.stream()
+                            .anyMatch(role ->
+                                    role.equalsIgnoreCase("seller") ||
+                                    role.equalsIgnoreCase("admin"));
 
-        // assigning the Roles to the all
+            if (hasRestrictedRole) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(new MessageResponse(
+                                "Role assignment not allowed " +
+                                "during self-signup. " +
+                                "Contact admin to create " +
+                                "a seller account."));
+            }
+        }
 
         if (strRoles == null) {
             Role userRole = roleRepository.findByRoleName(AppRole.ROLE_USER)

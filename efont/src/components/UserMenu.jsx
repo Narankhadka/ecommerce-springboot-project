@@ -60,8 +60,9 @@ const UserMenu = () => {
             </MenuItem>
           </Link>
 
+          {!isSeller && (
           <Link to="/profile/orders">
-            <MenuItem className="flex gap-2" 
+            <MenuItem className="flex gap-2"
                 onClick={handleClose}>
                     <FaShoppingCart className='text-xl'/>
                     <span className='font-semibold'>
@@ -69,6 +70,7 @@ const UserMenu = () => {
                     </span>
             </MenuItem>
           </Link>
+          )}
 
           { (isAdmin || isSeller) && (
           <Link to={isAdmin ? "/admin" : "/admin/orders"}>

@@ -1,33 +1,18 @@
+import { useEffect, useState } from 'react';
 import ProductCard from './shared/ProductCard';
-
-const products = [
-    {
-        image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=400',
-        productName: 'iPhone 13 Pro Max',
-        description:
-            'The iPhone 13 Pro Max offers exceptional performance with its A15 Bionic chip, stunning Super Retina XDR display, and advanced camera features for breathtaking photos.',
-        specialPrice: 720,
-        price: 780,
-    },
-    {
-        image: 'https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400',
-        productName: 'Samsung Galaxy S21',
-        description:
-            'Experience the brilliance of the Samsung Galaxy S21 with its vibrant AMOLED display, powerful camera, and sleek design that fits perfectly in your hand.',
-        specialPrice: 699,
-        price: 799,
-    },
-    {
-        image: 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?w=400',
-        productName: 'Google Pixel 6',
-        description:
-            'The Google Pixel 6 boasts cutting-edge AI features, exceptional photo quality, and a stunning display — a perfect choice for Android enthusiasts.',
-        price: 599,
-        specialPrice: 400,
-    },
-];
+import api from '../api/api';
 
 const About = () => {
+    const [topProducts, setTopProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        api.get('/public/products/top-selling')
+            .then((res) => setTopProducts(res.data))
+            .catch(() => setTopProducts([]))
+            .finally(() => setLoading(false));
+    }, []);
+
     return (
         <div className='max-w-7xl mx-auto px-4 py-8'>
             <h1 className='text-slate-800 text-4xl font-bold text-center mb-12'>About Us</h1>
@@ -57,19 +42,29 @@ const About = () => {
 
             <div className='py-7 space-y-8'>
                 <h1 className='text-slate-800 text-4xl font-bold text-center'>Our Products</h1>
-                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
-                    {products.map((product, index) => (
-                        <ProductCard
-                            key={index}
-                            image={product.image}
-                            productName={product.productName}
-                            description={product.description}
-                            specialPrice={product.specialPrice}
-                            price={product.price}
-                            about
-                        />
-                    ))}
-                </div>
+
+                {loading ? (
+                    <div className='text-center text-gray-500 py-8'>Loading...</div>
+                ) : topProducts.length === 0 ? (
+                    <div className='text-center text-gray-500 py-8'>No products available yet.</div>
+                ) : (
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+                        {topProducts.map((product) => (
+                            <ProductCard
+                                key={product.productId}
+                                productId={product.productId}
+                                image={product.image}
+                                productName={product.productName}
+                                description={product.description}
+                                specialPrice={product.specialPrice}
+                                price={product.price}
+                                quantity={product.quantity}
+                                discount={product.discount}
+                                about
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

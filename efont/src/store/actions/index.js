@@ -109,11 +109,27 @@ export const decreaseCartQuantity =
         localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
     }
 
-export const removeFromCart =  (data, toast) => (dispatch, getState) => {
-    dispatch({type: "REMOVE_CART", payload: data });
+export const removeFromCart = (data, toast) => async (dispatch, getState) => {
+    const { cartId } = getState().carts;
+
+    // If the cart is already synced to the backend, delete from backend first.
+    // Only update Redux after the backend confirms, so no stale data can be
+    // restored by a later getUserCart() call.
+    if (cartId) {
+        try {
+            await api.delete(`/carts/${cartId}/product/${data.productId}`);
+        } catch (error) {
+            toast.error(
+                error?.response?.data?.message || "Failed to remove item from cart"
+            );
+            return;
+        }
+    }
+
+    dispatch({ type: "REMOVE_CART", payload: data });
     toast.success(`${data.productName} removed from cart`);
     localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
-}
+};
 
 
 
@@ -250,13 +266,35 @@ export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         await api.post('/cart/create', sendCartItems);
+
+        // Fetch the backend cart to detect stale items left over from previous sessions.
+        // /cart/create only ADDs items — it never removes — so a previous session's
+        // removed items can still be present in the backend cart here.
+        const { data } = await api.get('/carts/users/cart');
+
+        if (data.cartId) {
+            const localProductIds = new Set(sendCartItems.map((i) => i.productId));
+            const staleItems = (data.products || []).filter(
+                (p) => !localProductIds.has(p.productId)
+            );
+
+            // Delete each stale item from the backend so getUserCart() returns a clean cart
+            await Promise.all(
+                staleItems.map((item) =>
+                    api
+                        .delete(`/carts/${data.cartId}/product/${item.productId}`)
+                        .catch(() => {})
+                )
+            );
+        }
+
         await dispatch(getUserCart());
     } catch (error) {
         console.log(error);
-        dispatch({ 
+        dispatch({
             type: "IS_ERROR",
             payload: error?.response?.data?.message || "Failed to create cart items",
-         });
+        });
     }
 };
 
@@ -662,7 +700,7 @@ export const addNewDashboardSeller =
   (sendData, toast, reset, setOpen, setLoader) => async (dispatch) => {
     try {
       setLoader(true);
-      await api.post("/auth/signup", sendData);
+      await api.post("/admin/sellers/register", sendData);
       reset();
       toast.success("Seller registered successfully!");
 
@@ -677,5 +715,38 @@ export const addNewDashboardSeller =
     } finally {
       setLoader(false);
       setOpen(false);
+    }
+  };
+
+export const deleteSeller =
+  (sellerId, toast, setLoader, setOpen) => async (dispatch) => {
+    try {
+      setLoader(true);
+      await api.delete(`/admin/sellers/${sellerId}`);
+      toast.success("Seller deleted successfully");
+      setOpen(false);
+      await dispatch(getAllSellersDashboard());
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete seller"
+      );
+    } finally {
+      setLoader(false);
+    }
+  };
+
+export const changeSellerPassword =
+  (sellerId, newPassword, toast, setLoader, setOpen) => async (dispatch) => {
+    try {
+      setLoader(true);
+      await api.put(`/admin/sellers/${sellerId}/password`, { newPassword });
+      toast.success("Password updated successfully");
+      setOpen(false);
+    } catch (err) {
+      toast.error(
+        err?.response?.data?.message || "Failed to update password"
+      );
+    } finally {
+      setLoader(false);
     }
   };

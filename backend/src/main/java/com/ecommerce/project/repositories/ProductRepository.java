@@ -28,6 +28,17 @@ public interface ProductRepository extends JpaRepository <Product , Long>{
     // Used by searchProductByKeyword — only active products
     Page<Product> findByProductNameLikeIgnoreCaseAndActiveTrue(String keyword, Pageable pageDetails);
 
+    // Used by seller panel — fetch only seller's active products (paginated)
+    Page<Product> findBySellerUserIdAndActiveTrue(Long userId, Pageable pageable);
+
+    // Used by seller dashboard — count seller's active products
+    @Query("SELECT COUNT(p) FROM Product p WHERE p.seller.userId = :sellerId AND p.active = true")
+    Long countActiveProductsBySeller(@Param("sellerId") Long sellerId);
+
+    // Used by About page — top 3 products by total units sold
+    @Query("SELECT p FROM Product p JOIN OrderItem oi ON oi.product = p WHERE p.active = true GROUP BY p ORDER BY SUM(oi.quantity) DESC")
+    List<Product> findTopSellingProducts(Pageable pageable);
+
     // Used by searchProducts (keyword + category filter) — only active products
     @Query(value = """
             SELECT p.* FROM products p
@@ -51,4 +62,27 @@ public interface ProductRepository extends JpaRepository <Product , Long>{
     Page<Product> findByFilters(@Param("keyword") String keyword,
                                 @Param("category") String category,
                                 Pageable pageable);
+
+    // Used by recommendations — same category, excluding current product, active only
+    @Query("SELECT p FROM Product p " +
+           "WHERE p.category = :category " +
+           "AND p.productId != :productId " +
+           "AND p.active = true " +
+           "ORDER BY p.productId DESC")
+    List<Product> findSameCategoryProducts(
+            @Param("category") Category category,
+            @Param("productId") Long productId,
+            Pageable pageable);
+
+    // Used by recommendations — products bought in the same orders as this product
+    @Query("SELECT DISTINCT oi2.product " +
+           "FROM OrderItem oi1 " +
+           "JOIN OrderItem oi2 " +
+           "  ON oi1.order = oi2.order " +
+           "WHERE oi1.product.productId = :productId " +
+           "AND oi2.product.productId != :productId " +
+           "AND oi2.product.active = true")
+    List<Product> findCustomersAlsoBought(
+            @Param("productId") Long productId,
+            Pageable pageable);
 }

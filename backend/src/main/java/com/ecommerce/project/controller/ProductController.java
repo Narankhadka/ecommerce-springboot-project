@@ -7,10 +7,12 @@ import com.ecommerce.project.serviceInterface.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api")
@@ -21,6 +23,17 @@ public class ProductController {
 
     public ProductController(ProductService productService) {
         this.productService = productService;
+    }
+
+    @GetMapping("/public/products/top-selling")
+    public ResponseEntity<List<ProductDTO>> getTopSellingProducts() {
+        List<ProductDTO> dtos = productService.getTopSellingProducts();
+        return ResponseEntity.ok(dtos);
+    }
+
+    @GetMapping("/public/products/{productId}/recommendations")
+    public ResponseEntity<List<ProductDTO>> getRecommendations(@PathVariable Long productId) {
+        return ResponseEntity.ok(productService.getRecommendations(productId));
     }
 
     //Get all products (with optional keyword and category filters)
@@ -94,11 +107,12 @@ public class ProductController {
     }
 
     @PutMapping("/seller/products/{productId}")
-    public ResponseEntity<ProductDTO>updateProductSeller(@Valid @RequestBody ProductDTO productDTO,
-                                                   @PathVariable Long productId)
+    public ResponseEntity<ProductDTO> updateProductSeller(@Valid @RequestBody ProductDTO productDTO,
+                                                          @PathVariable Long productId,
+                                                          Authentication authentication)
     {
-       ProductDTO updatedProductDTO= productService.updateProduct(productId,productDTO);
-        return new ResponseEntity<>(updatedProductDTO,HttpStatus.OK);
+        ProductDTO updatedProductDTO = productService.updateProductForSeller(productId, productDTO, authentication.getName());
+        return new ResponseEntity<>(updatedProductDTO, HttpStatus.OK);
     }
 
     @DeleteMapping("/admin/products/{productId}")
@@ -109,10 +123,11 @@ public class ProductController {
     }
 
     @DeleteMapping("/seller/products/{productId}")
-    public ResponseEntity <ProductDTO> deleteProductSeller(@PathVariable Long productId )
+    public ResponseEntity<ProductDTO> deleteProductSeller(@PathVariable Long productId,
+                                                          Authentication authentication)
     {
-       ProductDTO productDTO= productService.deleteProduct(productId);
-       return  new ResponseEntity<>(productDTO,HttpStatus.OK);
+        ProductDTO productDTO = productService.deleteProductForSeller(productId, authentication.getName());
+        return new ResponseEntity<>(productDTO, HttpStatus.OK);
     }
 
 
@@ -151,13 +166,14 @@ public class ProductController {
 
     @GetMapping("/seller/products")
     public ResponseEntity<ProductResponse> getSellerProducts(
-            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER,required = false) Integer pageNumber,
-            @RequestParam(name = "pageSize",defaultValue = AppConstants.PAGE_SIZE,required = false)Integer pageSize,
-            @RequestParam(name = "sortBy",defaultValue = AppConstants.SORT_PRODUCTS_BY,required = false)String sortBy,
-            @RequestParam(name = "sortOrder",defaultValue = AppConstants.SORT_DIR,required = false)String sortOrder
-    ){
-       ProductResponse productResponse= productService.getAllProducts(pageNumber,pageSize,sortBy,sortOrder);
-       return  new ResponseEntity<>(productResponse , HttpStatus.OK);
+            @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
+            @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
+            @RequestParam(name = "sortBy", defaultValue = AppConstants.SORT_PRODUCTS_BY, required = false) String sortBy,
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder,
+            Authentication authentication
+    ) {
+        ProductResponse productResponse = productService.getProductsForSeller(authentication.getName(), pageNumber, pageSize, sortBy, sortOrder);
+        return new ResponseEntity<>(productResponse, HttpStatus.OK);
     }
 
 }

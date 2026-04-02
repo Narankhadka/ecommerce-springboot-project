@@ -55,12 +55,12 @@ public class CartServiceImpl implements CartService {
         }
 
         if (product.getQuantity() == 0) {
-            throw new APIException(product.getProductName() + " is not available");
+            throw new APIException(product.getProductName() + " is out of stock");
         }
 
         if (product.getQuantity() < quantity) {
-            throw new APIException("Please, make an order of the " + product.getProductName()
-                    + " less than or equal to the quantity " + product.getQuantity() + ".");
+            throw new APIException("Only " + product.getQuantity() + " unit(s) of "
+                    + product.getProductName() + " are available");
         }
 
         CartItem newCartItem = new CartItem();

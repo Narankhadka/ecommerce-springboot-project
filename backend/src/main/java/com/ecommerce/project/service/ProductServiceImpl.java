@@ -5,12 +5,15 @@ import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.CartDTO;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.CategoryRepository;
 import com.ecommerce.project.repositories.ProductRepository;
+import com.ecommerce.project.repositories.ReviewRepository;
+import com.ecommerce.project.repositories.UserRepository;
 import com.ecommerce.project.serviceInterface.CartService;
 import com.ecommerce.project.serviceInterface.FileService;
 import com.ecommerce.project.serviceInterface.ProductService;
@@ -23,9 +26,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,12 +47,30 @@ public class ProductServiceImpl implements ProductService {
     CartRepository cartRepository;
     @Autowired
     CartService cartService;
+    @Autowired
+    UserRepository userRepository;
+    @Autowired
+    ReviewRepository reviewRepository;
+
     public ProductServiceImpl(CategoryRepository categoryRepository, ModelMapper modelMapper, ProductRepository productRepository, FileService fileService) {
 
         this.categoryRepository = categoryRepository;
         this.modelMapper = modelMapper;
         this.productRepository = productRepository;
         this.fileService = fileService;
+    }
+
+    // Maps a Product entity to ProductDTO and populates sellerId, sellerName, averageRating, reviewCount
+    private ProductDTO mapToDTO(Product product) {
+        ProductDTO dto = modelMapper.map(product, ProductDTO.class);
+        if (product.getSeller() != null) {
+            dto.setSellerId(product.getSeller().getUserId());
+            dto.setSellerName(product.getSeller().getUserName());
+        }
+        Double avg = reviewRepository.findAverageRatingByProductId(product.getProductId());
+        dto.setAverageRating(avg != null ? Math.round(avg * 10.0) / 10.0 : null);
+        dto.setReviewCount(reviewRepository.countByProductProductId(product.getProductId()));
+        return dto;
     }
 
     @Override
@@ -74,9 +97,23 @@ public class ProductServiceImpl implements ProductService {
             double discount = productDTO.getDiscount() != null ? productDTO.getDiscount() : 0.0;
             double specialPrice = product.getPrice() - ((discount * 0.01) * product.getPrice());
             product.setSpecialPrice(specialPrice);
+
+            if (productDTO.getSellerId() != null) {
+                // Admin is assigning a specific seller
+                User seller = userRepository.findById(productDTO.getSellerId())
+                        .orElseThrow(() -> new RuntimeException("Seller not found"));
+                product.setSeller(seller);
+            } else {
+                // Seller is adding their own product — auto-assign from authenticated user
+                String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                User seller = userRepository.findByUserName(username)
+                        .orElseThrow(() -> new RuntimeException("Seller not found"));
+                product.setSeller(seller);
+            }
+
             Product savedProduct = productRepository.save(product);
 
-            return modelMapper.map(savedProduct, ProductDTO.class);
+            return mapToDTO(savedProduct);
         }
         else
         {
@@ -87,6 +124,7 @@ public class ProductServiceImpl implements ProductService {
 
 
     @Override
+    @Transactional
     public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder)
     {
         Sort sortByAndOrder=sortOrder.equalsIgnoreCase("asc") ?
@@ -96,21 +134,35 @@ public class ProductServiceImpl implements ProductService {
         Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
         Page<Product>pageProducts=productRepository.findByActiveTrue(pageDetails);
 
-        List<Product>products=pageProducts.getContent();
+        List<ProductDTO> productDTOS = pageProducts.getContent().stream()
+                .map(this::mapToDTO)
+                .toList();
 
-        List<ProductDTO> productDTOS= products.stream().
-                map(product -> modelMapper
-                        .map(product,ProductDTO.class)).toList();
-
-//        if (products.isEmpty()){
-//            throw   new APIException("No Product Exits!!");
-//        }
         return getProductResponse(pageProducts, productDTOS);
     }
 
+    @Override
+    @Transactional
+    public ProductResponse getProductsForSeller(String sellerUsername, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        User seller = userRepository.findByUserName(sellerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller", "username", sellerUsername));
 
+        Sort sort = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<Product> page = productRepository.findBySellerUserIdAndActiveTrue(seller.getUserId(), pageable);
+
+        List<ProductDTO> dtos = page.getContent().stream()
+                .map(this::mapToDTO)
+                .toList();
+
+        return getProductResponse(page, dtos);
+    }
 
     @Override
+    @Transactional
     public ProductResponse searchProducts(String keyword, String categoryName, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
@@ -123,13 +175,14 @@ public class ProductServiceImpl implements ProductService {
 
         Page<Product> pageProducts = productRepository.findByFilters(keywordParam, categoryParam, pageDetails);
         List<ProductDTO> productDTOS = pageProducts.getContent().stream()
-                .map(product -> modelMapper.map(product, ProductDTO.class))
+                .map(this::mapToDTO)
                 .toList();
 
         return getProductResponse(pageProducts, productDTOS);
     }
 
     @Override
+    @Transactional
     public ProductResponse searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(()->
@@ -143,9 +196,10 @@ public class ProductServiceImpl implements ProductService {
         Page<Product>pageProducts= productRepository.findByCategoryAndActiveTrueOrderByPriceAsc(category,pageDetails);
            List<Product>products= pageProducts.getContent();
 
-        List<ProductDTO> productDTOS= products.stream().
-                map(product -> modelMapper
-                        .map(product,ProductDTO.class)).toList();
+        List<ProductDTO> productDTOS = products.stream()
+                .map(this::mapToDTO)
+                .toList();
+
         if (products.isEmpty()){
             throw  new APIException(category.getCategoryName() + "category doesn't have any product" );
         }
@@ -154,6 +208,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
     public ProductResponse searchProductByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
 
         Sort sortByAndOrder=sortOrder.equalsIgnoreCase("asc") ?
@@ -164,14 +219,13 @@ public class ProductServiceImpl implements ProductService {
         Page<Product>pageProducts= productRepository.findByProductNameLikeIgnoreCaseAndActiveTrue(keyword,pageDetails);
 
         List<Product>products=pageProducts.getContent();
-        List<ProductDTO> productDTOS= products.stream().
-                map(product -> modelMapper
-                        .map(product,ProductDTO.class)).toList();
+        List<ProductDTO> productDTOS = products.stream()
+                .map(this::mapToDTO)
+                .toList();
 
         if (products.isEmpty()){
             throw  new APIException("Product not found with keyword "+keyword );
         }
-
 
         return getProductResponse(pageProducts, productDTOS);
     }
@@ -191,15 +245,14 @@ public class ProductServiceImpl implements ProductService {
     @Override
     @Transactional
     public ProductDTO updateProduct(Long productId, ProductDTO productDTO) {
-//        Product existing =productRepository.findById(productId).orElseThrow(()->new ResourceNotFoundException("Product","productId",productId));
-
+        if (productDTO.getQuantity() != null && productDTO.getQuantity() < 0) {
+            throw new APIException("Quantity cannot be negative");
+        }
 
         Product product = modelMapper.map(productDTO,Product.class);
-        //Get the existing product from DB
         Product productFromDb= productRepository.findById(productId)
                 .orElseThrow(()-> new ResourceNotFoundException("Product","productId",productId));
 
-        // update the product info with one in request body
         productFromDb.setProductName(product.getProductName());
         productFromDb.setDescription(product.getDescription());
         productFromDb.setQuantity((product.getQuantity()));
@@ -208,31 +261,66 @@ public class ProductServiceImpl implements ProductService {
 
         double discount = product.getDiscount();
         double specialPrice = product.getPrice() - ((discount * 0.01) * product.getPrice());
-        product.setSpecialPrice(specialPrice);
-
         productFromDb.setSpecialPrice(specialPrice);
 
-        // save to database
-       Product savedProduct= productRepository.save(productFromDb);
+        Product savedProduct = productRepository.save(productFromDb);
 
-
-       // For cart new logic
         List<Cart>carts=cartRepository.findCartsByProductId(productId);
-
-
         List<CartDTO> cartDTOS= carts.stream().map(cart -> {
             CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
             List<ProductDTO> products=cart.getCartItems().stream()
-                    .map(p -> modelMapper.map(p.getProduct(),ProductDTO.class))
+                    .map(p -> mapToDTO(p.getProduct()))
                     .collect(Collectors.toList());
             cartDTO.setProducts(products);
             return cartDTO;
         }).toList();
         cartDTOS.forEach(cart ->cartService.updateProductInCart(cart.getCartId(),productId));
 
+        return mapToDTO(savedProduct);
+    }
 
+    @Override
+    @Transactional
+    public ProductDTO updateProductForSeller(Long productId, ProductDTO productDTO, String sellerUsername) {
+        if (productDTO.getQuantity() != null && productDTO.getQuantity() < 0) {
+            throw new APIException("Quantity cannot be negative");
+        }
 
-        return modelMapper.map(savedProduct,ProductDTO.class);
+        User seller = userRepository.findByUserName(sellerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller", "username", sellerUsername));
+
+        Product productFromDb = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        if (productFromDb.getSeller() == null ||
+                !productFromDb.getSeller().getUserId().equals(seller.getUserId())) {
+            throw new APIException("You can only modify your own products");
+        }
+
+        productFromDb.setProductName(productDTO.getProductName());
+        productFromDb.setDescription(productDTO.getDescription());
+        productFromDb.setQuantity(productDTO.getQuantity());
+        productFromDb.setDiscount(productDTO.getDiscount() != null ? productDTO.getDiscount() : 0.0);
+        productFromDb.setPrice(productDTO.getPrice());
+
+        double discount = productFromDb.getDiscount();
+        double specialPrice = productFromDb.getPrice() - ((discount * 0.01) * productFromDb.getPrice());
+        productFromDb.setSpecialPrice(specialPrice);
+
+        Product savedProduct = productRepository.save(productFromDb);
+
+        List<Cart> carts = cartRepository.findCartsByProductId(productId);
+        List<CartDTO> cartDTOS = carts.stream().map(cart -> {
+            CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
+            List<ProductDTO> products = cart.getCartItems().stream()
+                    .map(p -> mapToDTO(p.getProduct()))
+                    .collect(Collectors.toList());
+            cartDTO.setProducts(products);
+            return cartDTO;
+        }).toList();
+        cartDTOS.forEach(cart -> cartService.updateProductInCart(cart.getCartId(), productId));
+
+        return mapToDTO(savedProduct);
     }
 
     @Override
@@ -250,31 +338,82 @@ public class ProductServiceImpl implements ProductService {
         product.setActive(false);
         productRepository.save(product);
 
-        return modelMapper.map(product, ProductDTO.class);
+        return mapToDTO(product);
+    }
+
+    @Override
+    @Transactional
+    public ProductDTO deleteProductForSeller(Long productId, String sellerUsername) {
+        User seller = userRepository.findByUserName(sellerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Seller", "username", sellerUsername));
+
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        if (product.getSeller() == null ||
+                !product.getSeller().getUserId().equals(seller.getUserId())) {
+            throw new APIException("You can only modify your own products");
+        }
+
+        List<Cart> carts = cartRepository.findCartsByProductId(productId);
+        carts.forEach(cart -> cartService.deleteProductFromCart(cart.getCartId(), productId));
+
+        product.setActive(false);
+        productRepository.save(product);
+
+        return mapToDTO(product);
+    }
+
+    @Override
+    @Transactional
+    public List<ProductDTO> getTopSellingProducts() {
+        Pageable pageable = PageRequest.of(0, 3);
+        List<Product> products = productRepository.findTopSellingProducts(pageable);
+        return products.stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public List<ProductDTO> getRecommendations(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
+
+        Pageable top4 = PageRequest.of(0, 4);
+
+        List<Product> alsoBought = productRepository.findCustomersAlsoBought(productId, top4);
+
+        int remaining = 8 - alsoBought.size();
+        List<Product> sameCategory = productRepository.findSameCategoryProducts(
+                product.getCategory(),
+                productId,
+                PageRequest.of(0, remaining));
+
+        List<Product> combined = new ArrayList<>();
+        combined.addAll(alsoBought);
+        sameCategory.stream()
+                .filter(p -> alsoBought.stream()
+                        .noneMatch(a -> a.getProductId().equals(p.getProductId())))
+                .forEach(combined::add);
+
+        return combined.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
     public ProductDTO updateProductImage(Long productId, MultipartFile image) throws IOException {
-       //Get the product from Db
         Product productFromDb= productRepository.findById(productId).
                 orElseThrow(()->new ResourceNotFoundException("Product","productid",productId));
 
-        // upload image to server
-        //get the file name of uploaded image
-
         String fileName=fileService.uploadImage(path, image);
 
-
-        // Updating the new file name to the product
         productFromDb.setImage(fileName);
 
-        //Save the updated product
         Product updatedProduct = productRepository.save(productFromDb);
 
-        // return  DTO after mapping product to DTO
-        return  modelMapper.map(updatedProduct,ProductDTO.class);
-
-
+        return mapToDTO(updatedProduct);
     }
 
 

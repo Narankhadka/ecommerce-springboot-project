@@ -1,4 +1,4 @@
-import { FaBoxOpen, FaHome, FaShoppingCart, FaStore, FaThList } from "react-icons/fa";
+import { FaBoxOpen, FaChartBar, FaHome, FaShoppingCart, FaStore, FaThList } from "react-icons/fa";
 import { bannerImageOne, bannerImageThree, bannerImageTwo } from "./constant";
 
 export const bannerLists = [
@@ -54,13 +54,21 @@ export const adminNavigation = [
 
 export const sellerNavigation = [
   {
-    name: "Orders", 
-    href: "/admin/orders", 
-    icon: FaShoppingCart,
-    current: true 
+    name: "Dashboard",
+    href: "/admin/seller-dashboard",
+    icon: FaHome,
+    current: true
   }, {
-    name: "Products", 
-    href: "/admin/products", 
+    name: "Orders",
+    href: "/admin/orders",
+    icon: FaShoppingCart
+  }, {
+    name: "Products",
+    href: "/admin/products",
     icon: FaBoxOpen
+  }, {
+    name: "Earnings",
+    href: "/admin/seller-earnings",
+    icon: FaChartBar
   }
 ];

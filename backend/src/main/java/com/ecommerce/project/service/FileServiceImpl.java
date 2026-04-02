@@ -28,7 +28,7 @@ public class FileServiceImpl implements FileService {
         //check if path exist and create
         File folder = new File(path);
         if (!folder.exists()) {
-            folder.mkdirs();   // ✅ creates parent directories also
+            folder.mkdirs();
         }
 
 

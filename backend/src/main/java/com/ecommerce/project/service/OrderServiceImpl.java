@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -31,8 +32,9 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final CartService cartService;
     private final ModelMapper modelMapper;
+    private final UserRepository userRepository;
 
-    public OrderServiceImpl(CartRepository cartRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, CartService cartService, ModelMapper modelMapper) {
+    public OrderServiceImpl(CartRepository cartRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, CartService cartService, ModelMapper modelMapper, UserRepository userRepository) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.paymentRepository=paymentRepository;
@@ -41,6 +43,7 @@ public class OrderServiceImpl implements OrderService {
         this.productRepository = productRepository;
         this.cartService = cartService;
         this.modelMapper = modelMapper;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -58,7 +61,7 @@ public class OrderServiceImpl implements OrderService {
         order.setEmail(emailId);
         order.setOrderDate(LocalDate.now());
         order.setTotalAmount(cart.getTotalPrice());
-        order.setOrderStatus("Accepted");
+        order.setOrderStatus("Placed");
         order.setAddress(address);
 
         Payment payment = new Payment(paymentMethod, pgPaymentId, pgStatus, pgResponseMessage, pgName);
@@ -160,7 +163,48 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
+    public OrderResponse getOrdersForSeller(String sellerUsername, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        User seller = userRepository.findByUserName(sellerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", sellerUsername));
+
+        Sort sort = sortOrder.equalsIgnoreCase("asc")
+                ? Sort.by(sortBy).ascending()
+                : Sort.by(sortBy).descending();
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
+
+        Page<Order> page = orderRepository.findOrdersContainingSellerProducts(seller.getUserId(), pageable);
+
+        List<OrderDTO> dtos = page.getContent().stream()
+                .map(order -> {
+                    OrderDTO orderDTO = modelMapper.map(order, OrderDTO.class);
+                    if (order.getAddress() != null) {
+                        orderDTO.setAddressId(order.getAddress().getAddressId());
+                    }
+                    return orderDTO;
+                })
+                .collect(Collectors.toList());
+
+        OrderResponse response = new OrderResponse();
+        response.setContent(dtos);
+        response.setPageNumber(page.getNumber());
+        response.setPageSize(page.getSize());
+        response.setTotalElements(page.getTotalElements());
+        response.setTotalPages(page.getTotalPages());
+        response.setLastPage(page.isLast());
+        return response;
+    }
+
+    @Override
+    @Transactional
     public OrderDTO updateOrderStatus(Long orderId, String status) {
+        List<String> validStatuses = List.of(
+                "Placed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"
+        );
+        if (!validStatuses.contains(status)) {
+            throw new APIException("Invalid order status: " + status);
+        }
+
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
 
@@ -170,6 +214,44 @@ public class OrderServiceImpl implements OrderService {
         OrderDTO orderDTO = modelMapper.map(updatedOrder, OrderDTO.class);
         if (updatedOrder.getAddress() != null) {
             orderDTO.setAddressId(updatedOrder.getAddress().getAddressId());
+        }
+        return orderDTO;
+    }
+
+    @Override
+    @Transactional
+    public OrderDTO updateOrderStatusForSeller(Long orderId, String newStatus, String sellerUsername) {
+        List<String> validStatuses = List.of(
+                "Placed", "Processing", "Shipped", "Out for Delivery", "Delivered", "Cancelled"
+        );
+        if (!validStatuses.contains(newStatus)) {
+            throw new APIException("Invalid order status: " + newStatus);
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order", "orderId", orderId));
+
+        if (order.getOrderStatus().equals("Delivered") || order.getOrderStatus().equals("Cancelled")) {
+            throw new APIException("Cannot update a " + order.getOrderStatus() + " order");
+        }
+
+        User seller = userRepository.findByUserName(sellerUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "username", sellerUsername));
+
+        boolean isSellerOrder = order.getOrderItems().stream()
+                .anyMatch(item -> item.getProduct().getSeller() != null &&
+                        item.getProduct().getSeller().getUserId().equals(seller.getUserId()));
+
+        if (!isSellerOrder) {
+            throw new APIException("You can only update orders containing your own products");
+        }
+
+        order.setOrderStatus(newStatus);
+        Order savedOrder = orderRepository.save(order);
+
+        OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
+        if (savedOrder.getAddress() != null) {
+            orderDTO.setAddressId(savedOrder.getAddress().getAddressId());
         }
         return orderDTO;
     }

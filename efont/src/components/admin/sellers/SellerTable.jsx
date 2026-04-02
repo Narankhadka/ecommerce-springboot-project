@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import { sellerTableColumns } from "../../helper/tableColumn";
 
-const SellerTable = ({ sellers, pagination }) => {
+const SellerTable = ({ sellers, pagination, onDelete, onChangePassword }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const pathname = useLocation().pathname;
@@ -26,6 +26,8 @@ const SellerTable = ({ sellers, pagination }) => {
     navigate(`${pathname}?${params}`);
   };
 
+  const columns = sellerTableColumns(onDelete, onChangePassword);
+
   return (
     <div>
       <div className="max-w-fit mx-auto">
@@ -34,7 +36,7 @@ const SellerTable = ({ sellers, pagination }) => {
           rows={tableRecords}
           paginationMode="server"
           rowCount={pagination?.totalElements || 0}
-          columns={sellerTableColumns}
+          columns={columns}
           initialState={{
             pagination: {
               paginationModel: {

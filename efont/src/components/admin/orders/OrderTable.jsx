@@ -1,11 +1,11 @@
 import { DataGrid } from '@mui/x-data-grid'
-import { adminOrderTableColumn } from '../../helper/tableColumn';
+import { adminOrderTableColumn, sellerOrderTableColumn } from '../../helper/tableColumn';
 import { useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../../shared/Modal';
 import UpdateOrderForm from './UpdateOrderForm';
 
-const OrderTable = ({ adminOrder, pagination}) => {
+const OrderTable = ({ adminOrder, pagination, isAdmin, onStatusChange }) => {
   const [updateOpenModal, setUpdateOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState("");
   const [loader, setLoader] = useState(false);
@@ -50,7 +50,7 @@ const handleEdit = (order) => {
          <DataGrid
          className='w-full'
             rows={tableRecords}
-            columns={adminOrderTableColumn(handleEdit)}
+            columns={isAdmin ? adminOrderTableColumn(handleEdit) : sellerOrderTableColumn(onStatusChange)}
             paginationMode='server'
             rowCount={pagination?.totalElements || 0}
             initialState={{
@@ -74,19 +74,21 @@ const handleEdit = (order) => {
           />
       </div>
 
-      <Modal
-        open={updateOpenModal}
-        setOpen={setUpdateOpenModal}
-        title='Update Order Status'>
-          <UpdateOrderForm
-            setOpen={setUpdateOpenModal}
-            open={updateOpenModal}
-            loader={loader}
-            setLoader={setLoader}
-            selectedId={selectedItem.id}
-            selectedItem={selectedItem}
-            />
-      </Modal>
+      {isAdmin && (
+        <Modal
+          open={updateOpenModal}
+          setOpen={setUpdateOpenModal}
+          title='Update Order Status'>
+            <UpdateOrderForm
+              setOpen={setUpdateOpenModal}
+              open={updateOpenModal}
+              loader={loader}
+              setLoader={setLoader}
+              selectedId={selectedItem.id}
+              selectedItem={selectedItem}
+              />
+        </Modal>
+      )}
     </div>
   )
 }

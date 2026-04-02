@@ -8,6 +8,7 @@ import com.ecommerce.project.serviceInterface.OrderService;
 import com.ecommerce.project.util.AuthUtil;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -92,9 +93,11 @@ public class OrderController {
             @RequestParam(name = "pageNumber", defaultValue = AppConstants.PAGE_NUMBER, required = false) Integer pageNumber,
             @RequestParam(name = "pageSize", defaultValue = AppConstants.PAGE_SIZE, required = false) Integer pageSize,
             @RequestParam(name = "sortBy", defaultValue = "orderId", required = false) String sortBy,
-            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder
+            @RequestParam(name = "sortOrder", defaultValue = AppConstants.SORT_DIR, required = false) String sortOrder,
+            Authentication authentication
     ) {
-        OrderResponse orderResponse = orderService.getAllOrders(pageNumber, pageSize, sortBy, sortOrder);
+        String username = authentication.getName();
+        OrderResponse orderResponse = orderService.getOrdersForSeller(username, pageNumber, pageSize, sortBy, sortOrder);
         return new ResponseEntity<>(orderResponse, HttpStatus.OK);
     }
 
@@ -108,12 +111,14 @@ public class OrderController {
     }
 
     @PutMapping("/seller/orders/{orderId}/status")
-    public ResponseEntity<Map<String, String>> updateSellerOrderStatus(@PathVariable Long orderId, @RequestBody Map<String, String> request) {
-        String status = request.get("status");
-        orderService.updateOrderStatus(orderId, status);
-        Map<String, String> response = new HashMap<>();
-        response.put("message", "Order status updated to " + status);
-        return new ResponseEntity<>(response, HttpStatus.OK);
+    public ResponseEntity<OrderDTO> updateSellerOrderStatus(
+            @PathVariable Long orderId,
+            @RequestBody Map<String, String> request,
+            Authentication authentication) {
+        String newStatus = request.get("status");
+        String username = authentication.getName();
+        OrderDTO dto = orderService.updateOrderStatusForSeller(orderId, newStatus, username);
+        return ResponseEntity.ok(dto);
     }
 
 }

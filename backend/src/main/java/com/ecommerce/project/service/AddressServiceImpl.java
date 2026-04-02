@@ -5,6 +5,7 @@ import com.ecommerce.project.model.Address;
 import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AddressDTO;
 import com.ecommerce.project.repositories.AddressRepository;
+import com.ecommerce.project.repositories.OrderRepository;
 import com.ecommerce.project.repositories.UserRepository;
 import com.ecommerce.project.serviceInterface.AddressService;
 import org.modelmapper.ModelMapper;
@@ -17,11 +18,13 @@ public class AddressServiceImpl implements AddressService {
    private final ModelMapper modelMapper;
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
+    private final OrderRepository orderRepository;
 
-    public AddressServiceImpl(ModelMapper modelMapper, AddressRepository addressRepository, UserRepository userRepository) {
+    public AddressServiceImpl(ModelMapper modelMapper, AddressRepository addressRepository, UserRepository userRepository, OrderRepository orderRepository) {
         this.modelMapper = modelMapper;
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -98,14 +101,16 @@ public class AddressServiceImpl implements AddressService {
                 .orElseThrow(() -> new ResourceNotFoundException("Address", "AddressId", addressId));
 
         User user = address.getUser();
-
-        // correct removal
         user.getAddresses().removeIf(a -> a.getAddressId().equals(addressId));
-
         userRepository.save(user);
 
-        addressRepository.delete(address);
+        // If this address is referenced by an order, keep the DB record so the
+        // order history stays intact — just detach it from the user's list above.
+        if (orderRepository.existsByAddress_AddressId(addressId)) {
+            return "Address removed from your profile. It is retained in order records.";
+        }
 
+        addressRepository.delete(address);
         return "Address deleted successfully with id: " + addressId;
     }
 

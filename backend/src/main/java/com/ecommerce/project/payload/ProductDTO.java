@@ -16,4 +16,8 @@ public class ProductDTO {
     private Double price;
     private Double discount;
     private Double specialPrice;
+    private Long sellerId;
+    private String sellerName;
+    private Double averageRating;
+    private Long reviewCount;
 }

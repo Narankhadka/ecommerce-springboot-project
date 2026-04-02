@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import DashboardOverview from './DashboardOverview'
-import { FaBoxOpen, FaDollarSign, FaShoppingCart } from 'react-icons/fa';
+import { FaBoxOpen, FaShoppingCart } from 'react-icons/fa';
 import { MdAttachMoney } from 'react-icons/md';
 import { useDispatch, useSelector } from 'react-redux';
 import { analyticsAction } from '../../../store/actions';
@@ -43,10 +43,10 @@ const Dashboard = () => {
               Icon={FaShoppingCart}
             />
 
-            <DashboardOverview 
+            <DashboardOverview
               title="Total Revenue"
               amount={totalRevenue}
-              Icon={FaDollarSign}
+              Icon={MdAttachMoney}
               revenue
             />
       </div>
