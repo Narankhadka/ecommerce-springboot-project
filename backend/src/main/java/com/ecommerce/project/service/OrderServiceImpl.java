@@ -7,6 +7,7 @@ import com.ecommerce.project.payload.OrderDTO;
 import com.ecommerce.project.payload.OrderItemDTO;
 import com.ecommerce.project.payload.OrderResponse;
 import com.ecommerce.project.repositories.*;
+import com.ecommerce.project.service.EmailService;
 import com.ecommerce.project.serviceInterface.CartService;
 import com.ecommerce.project.serviceInterface.OrderService;
 import jakarta.transaction.Transactional;
@@ -33,8 +34,9 @@ public class OrderServiceImpl implements OrderService {
     private final CartService cartService;
     private final ModelMapper modelMapper;
     private final UserRepository userRepository;
+    private final EmailService emailService;
 
-    public OrderServiceImpl(CartRepository cartRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, CartService cartService, ModelMapper modelMapper, UserRepository userRepository) {
+    public OrderServiceImpl(CartRepository cartRepository, AddressRepository addressRepository, PaymentRepository paymentRepository, OrderRepository orderRepository, OrderItemRepository orderItemRepository, ProductRepository productRepository, CartService cartService, ModelMapper modelMapper, UserRepository userRepository, EmailService emailService) {
         this.cartRepository = cartRepository;
         this.addressRepository = addressRepository;
         this.paymentRepository=paymentRepository;
@@ -44,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
         this.cartService = cartService;
         this.modelMapper = modelMapper;
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -88,6 +91,29 @@ public class OrderServiceImpl implements OrderService {
         }
 
         orderItems = orderItemRepository.saveAll(orderItems);
+
+        // Send email notifications
+        String customerUsername = userRepository.findByEmail(emailId)
+                .map(u -> u.getUserName())
+                .orElse(emailId);
+        emailService.sendOrderConfirmationToCustomer(
+                savedOrder.getEmail(),
+                customerUsername,
+                savedOrder.getOrderId(),
+                savedOrder.getTotalAmount());
+
+        orderItems.stream()
+                .filter(oi -> oi.getProduct().getSeller() != null)
+                .collect(Collectors.groupingBy(oi -> oi.getProduct().getSeller()))
+                .forEach((seller, items) ->
+                        items.forEach(item ->
+                                emailService.sendNewOrderNotificationToSeller(
+                                        seller.getEmail(),
+                                        seller.getUserName(),
+                                        savedOrder.getOrderId(),
+                                        item.getProduct().getProductName(),
+                                        item.getQuantity(),
+                                        item.getOrderedProductPrice() * item.getQuantity())));
 
         // Snapshot the list before iterating — calling deleteProductFromCart() inside
         // the loop flushes the Hibernate session which can invalidate the live
@@ -248,6 +274,15 @@ public class OrderServiceImpl implements OrderService {
 
         order.setOrderStatus(newStatus);
         Order savedOrder = orderRepository.save(order);
+
+        String customerUsername = userRepository.findByEmail(savedOrder.getEmail())
+                .map(u -> u.getUserName())
+                .orElse(savedOrder.getEmail());
+        emailService.sendOrderStatusUpdateToCustomer(
+                savedOrder.getEmail(),
+                customerUsername,
+                savedOrder.getOrderId(),
+                newStatus);
 
         OrderDTO orderDTO = modelMapper.map(savedOrder, OrderDTO.class);
         if (savedOrder.getAddress() != null) {

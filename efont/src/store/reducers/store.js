@@ -12,10 +12,6 @@ const user = localStorage.getItem("auth")
     ? JSON.parse(localStorage.getItem("auth"))
     : null;
 
-const cartItems = localStorage.getItem("cartItems")
-    ? JSON.parse(localStorage.getItem("cartItems"))
-    : [];
-
 const selectedUserCheckoutAddress = localStorage.getItem("CHECKOUT_ADDRESS")
     ? JSON.parse(localStorage.getItem("CHECKOUT_ADDRESS"))
     : null;
@@ -24,9 +20,10 @@ const clientSecret = localStorage.getItem("client-secret")
     ? JSON.parse(localStorage.getItem("client-secret"))
     : null;
 
+// Cart is never preloaded from localStorage.
+// It is always fetched fresh from the backend using the logged-in user's JWT.
 const initialState = {
     auth: { user: user, selectedUserCheckoutAddress, clientSecret },
-    carts: { cart: cartItems },
 };
 
 export const store = configureStore({

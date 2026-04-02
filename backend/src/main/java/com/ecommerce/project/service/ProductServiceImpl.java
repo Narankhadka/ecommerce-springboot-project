@@ -403,6 +403,16 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional
+    public List<ProductDTO> getRandomProducts(Integer count) {
+        Pageable pageable = PageRequest.of(0, count);
+        List<Product> products = productRepository.findRandomActiveProducts(pageable);
+        return products.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public ProductDTO updateProductImage(Long productId, MultipartFile image) throws IOException {
         Product productFromDb= productRepository.findById(productId).
                 orElseThrow(()->new ResourceNotFoundException("Product","productid",productId));

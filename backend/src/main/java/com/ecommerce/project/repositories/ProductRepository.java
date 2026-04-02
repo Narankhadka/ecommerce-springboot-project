@@ -85,4 +85,8 @@ public interface ProductRepository extends JpaRepository <Product , Long>{
     List<Product> findCustomersAlsoBought(
             @Param("productId") Long productId,
             Pageable pageable);
+
+    // Used by home page random product fetch
+    @Query("SELECT p FROM Product p WHERE p.active = true ORDER BY FUNCTION('RANDOM')")
+    List<Product> findRandomActiveProducts(Pageable pageable);
 }

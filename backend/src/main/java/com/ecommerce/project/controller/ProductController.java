@@ -31,6 +31,12 @@ public class ProductController {
         return ResponseEntity.ok(dtos);
     }
 
+    @GetMapping("/public/products/random")
+    public ResponseEntity<List<ProductDTO>> getRandomProducts(
+            @RequestParam(defaultValue = "8") Integer count) {
+        return ResponseEntity.ok(productService.getRandomProducts(count));
+    }
+
     @GetMapping("/public/products/{productId}/recommendations")
     public ResponseEntity<List<ProductDTO>> getRecommendations(@PathVariable Long productId) {
         return ResponseEntity.ok(productService.getRecommendations(productId));

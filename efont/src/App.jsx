@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { useDispatch, useSelector } from 'react-redux';
+import { getUserCart } from './store/actions';
 
 import Navbar from './components/shared/Navbar';
+import LoginPromptModal from './components/shared/LoginPromptModal';
 import Footer from './components/shared/Footer';
 import Home from './components/home/Home';
 import Products from './components/products/Products';
@@ -29,6 +32,19 @@ import Orders from './components/admin/orders/Orders';
 import SellerEarnings from './components/admin/earnings/SellerEarnings';
 
 function App() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+
+  // On page refresh: if a valid JWT session exists, reload the cart from the
+  // backend so the user always sees their own up-to-date cart.
+  // On login/logout: user changes, so this also runs after authenticateSignInUser
+  // sets the new user, replacing any stale state with the fresh backend cart.
+  useEffect(() => {
+    if (user) {
+      dispatch(getUserCart());
+    }
+  }, [user, dispatch]);
+
   return (
     <React.Fragment>
       <Router>
@@ -71,6 +87,7 @@ function App() {
           </Route>
         </Routes>
         <Footer />
+        <LoginPromptModal />
       </Router>
       <Toaster position='bottom-center' />
     </React.Fragment>

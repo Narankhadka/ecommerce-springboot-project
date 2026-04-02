@@ -48,35 +48,35 @@ export const fetchCategories = () => async (dispatch) => {
 };
 
 
-export const addToCart = (data, qty = 1, toast) => 
+export const addToCart = (data, qty = 1, toast) =>
     (dispatch, getState) => {
-        // Find the product
+        const { user } = getState().auth;
+        if (!user) {
+            dispatch({ type: "SHOW_LOGIN_MODAL" });
+            return;
+        }
+
         const { products } = getState().products;
         const getProduct = products.find(
             (item) => item.productId === data.productId
         );
 
-        // Check for stocks
         const isQuantityExist = getProduct.quantity >= qty;
 
-        // If in stock -> add
         if (isQuantityExist) {
-            dispatch({ type: "ADD_CART", payload: {...data, quantity: qty}});
+            dispatch({ type: "ADD_CART", payload: {...data, quantity: qty} });
             toast.success(`${data?.productName} added to the cart`);
-            localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
         } else {
-            // error
             toast.error("Out of stock");
         }
 };
 
 
-export const increaseCartQuantity = 
+export const increaseCartQuantity =
     (data, toast, currentQuantity, setCurrentQuantity) =>
     (dispatch, getState) => {
-        // Find the product
         const { products } = getState().products;
-        
+
         const getProduct = products.find(
             (item) => item.productId === data.productId
         );
@@ -86,27 +86,23 @@ export const increaseCartQuantity =
         if (isQuantityExist) {
             const newQuantity = currentQuantity + 1;
             setCurrentQuantity(newQuantity);
-
             dispatch({
                 type: "ADD_CART",
                 payload: {...data, quantity: newQuantity },
             });
-            localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
         } else {
             toast.error("Quantity Reached to Limit");
         }
-
     };
 
 
 
-export const decreaseCartQuantity = 
-    (data, newQuantity) => (dispatch, getState) => {
+export const decreaseCartQuantity =
+    (data, newQuantity) => (dispatch) => {
         dispatch({
             type: "ADD_CART",
             payload: {...data, quantity: newQuantity},
         });
-        localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
     }
 
 export const removeFromCart = (data, toast) => async (dispatch, getState) => {
@@ -128,19 +124,23 @@ export const removeFromCart = (data, toast) => async (dispatch, getState) => {
 
     dispatch({ type: "REMOVE_CART", payload: data });
     toast.success(`${data.productName} removed from cart`);
-    localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
 };
 
 
 
-export const authenticateSignInUser 
+export const authenticateSignInUser
     = (sendData, toast, reset, navigate, setLoader) => async (dispatch) => {
         try {
             setLoader(true);
             const { data } = await api.post("/auth/signin", sendData);
+            // Clear any stale cart from a previous session before setting the new user
+            dispatch({ type: "CLEAR_CART" });
+            localStorage.removeItem("cartItems");
             dispatch({ type: "LOGIN_USER", payload: data });
             localStorage.setItem("auth", JSON.stringify(data));
             reset();
+            // Fetch this user's own cart from the backend immediately after login
+            await dispatch(getUserCart());
             toast.success("Login Success");
             navigate("/");
         } catch (error) {
@@ -170,8 +170,10 @@ export const registerNewUser
 
 
 export const logOutUser = (navigate) => (dispatch) => {
-    dispatch({ type:"LOG_OUT" });
+    dispatch({ type: "CLEAR_CART" });
+    dispatch({ type: "LOG_OUT" });
     localStorage.removeItem("auth");
+    localStorage.removeItem("cartItems");
     navigate("/login");
 };
 
@@ -299,25 +301,23 @@ export const createUserCart = (sendCartItems) => async (dispatch, getState) => {
 };
 
 
-export const getUserCart = () => async (dispatch, getState) => {
+export const getUserCart = () => async (dispatch) => {
     try {
         dispatch({ type: "IS_FETCHING" });
         const { data } = await api.get('/carts/users/cart');
-        
         dispatch({
             type: "GET_USER_CART_PRODUCTS",
             payload: data.products,
             totalPrice: data.totalPrice,
-            cartId: data.cartId
-        })
-        localStorage.setItem("cartItems", JSON.stringify(getState().carts.cart));
+            cartId: data.cartId,
+        });
         dispatch({ type: "IS_SUCCESS" });
     } catch (error) {
         console.log(error);
-        dispatch({ 
+        dispatch({
             type: "IS_ERROR",
             payload: error?.response?.data?.message || "Failed to fetch cart items",
-         });
+        });
     }
 };
 

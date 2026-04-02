@@ -27,7 +27,7 @@ const Category = () => {
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const { categoryLoader, errorMessage } = useSelector((state) => state.errors);
-  const { categories, pagination } = useSelector((state) => state.products);
+  const { categories, categoryPagination: pagination } = useSelector((state) => state.products);
   const [currentPage, setCurrentPage] = useState(
     pagination?.pageNumber + 1 || 1
   );

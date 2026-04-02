@@ -10,6 +10,7 @@ import com.ecommerce.project.repositories.OrderRepository;
 import com.ecommerce.project.repositories.ProductRepository;
 import com.ecommerce.project.repositories.RoleRepository;
 import com.ecommerce.project.repositories.UserRepository;
+import com.ecommerce.project.service.EmailService;
 import com.ecommerce.project.serviceInterface.AdminSellerService;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,17 +26,20 @@ public class AdminSellerServiceImpl implements AdminSellerService {
     private final ProductRepository productRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final EmailService emailService;
 
     public AdminSellerServiceImpl(UserRepository userRepository,
                                   OrderRepository orderRepository,
                                   ProductRepository productRepository,
                                   PasswordEncoder passwordEncoder,
-                                  RoleRepository roleRepository) {
+                                  RoleRepository roleRepository,
+                                  EmailService emailService) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.emailService = emailService;
     }
 
     @Override
@@ -90,5 +94,7 @@ public class AdminSellerServiceImpl implements AdminSellerService {
 
         seller.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(seller);
+
+        emailService.sendPasswordChangedEmail(seller.getEmail(), seller.getUserName());
     }
 }

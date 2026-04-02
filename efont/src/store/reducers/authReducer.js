@@ -3,6 +3,7 @@ const initialState = {
     address: [],
     clientSecret: null,
     selectedUserCheckoutAddress: null,
+    showLoginModal: false,
 }
 
 export const authReducer = (state = initialState, action) => {
@@ -20,11 +21,15 @@ export const authReducer = (state = initialState, action) => {
         case "REMOVE_CLIENT_SECRET_ADDRESS":
             return { ...state, clientSecret: null, selectedUserCheckoutAddress: null };
         case "LOG_OUT":
-            return { 
+            return {
                 user: null,
                 address: null,
-             };
-             
+                showLoginModal: false,
+            };
+        case "SHOW_LOGIN_MODAL":
+            return { ...state, showLoginModal: true };
+        case "HIDE_LOGIN_MODAL":
+            return { ...state, showLoginModal: false };
         default:
             return state;
     }

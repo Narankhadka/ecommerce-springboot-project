@@ -5,6 +5,7 @@ import com.ecommerce.project.model.Role;
 import com.ecommerce.project.model.User;
 import com.ecommerce.project.repositories.RoleRepository;
 import com.ecommerce.project.repositories.UserRepository;
+import com.ecommerce.project.service.EmailService;
 import com.ecommerce.project.security.jwt.JwtUtils;
 import com.ecommerce.project.security.request.LoginRequest;
 import com.ecommerce.project.security.request.SignupRequest;
@@ -50,6 +51,9 @@ public class AuthController {
 
     @Autowired
     RoleRepository roleRepository;
+
+    @Autowired
+    EmailService emailService;
 
 
     @PostMapping("/signin")
@@ -155,6 +159,9 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
+
+        emailService.sendWelcomeEmail(signupRequest.getEmail(), signupRequest.getUsername());
+
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 
 
