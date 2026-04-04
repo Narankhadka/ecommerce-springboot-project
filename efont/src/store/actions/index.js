@@ -57,11 +57,15 @@ export const addToCart = (data, qty = 1, toast) =>
         }
 
         const { products } = getState().products;
-        const getProduct = products.find(
+        const getProduct = products?.find(
             (item) => item.productId === data.productId
         );
 
-        const isQuantityExist = getProduct.quantity >= qty;
+        // When the product isn't in Redux (e.g. Home page fetches products into
+        // local state, not into the products reducer), fall back to the quantity
+        // included in the data payload passed by the caller.
+        const availableQuantity = getProduct ? getProduct.quantity : data.quantity;
+        const isQuantityExist = availableQuantity >= qty;
 
         if (isQuantityExist) {
             dispatch({ type: "ADD_CART", payload: {...data, quantity: qty} });
@@ -402,6 +406,30 @@ export const verifyEsewaAndPlaceOrder =
             setLoading(false);
         }
     };
+
+export const placeCODOrder = (addressId, totalPrice, toast, navigate) => async (dispatch) => {
+    try {
+        dispatch({ type: "BUTTON_LOADER" });
+        await api.post("/order/users/payments/COD", {
+            addressId,
+            pgName: "COD",
+            pgPaymentId: null,
+            pgStatus: "Pending",
+            pgResponseMessage: null,
+        });
+        localStorage.removeItem("CHECKOUT_ADDRESS");
+        localStorage.removeItem("cartItems");
+        dispatch({ type: "REMOVE_CLIENT_SECRET_ADDRESS" });
+        dispatch({ type: "CLEAR_CART" });
+        dispatch({ type: "IS_SUCCESS" });
+        toast.success(`Order placed successfully! Pay NPR ${Number(totalPrice).toFixed(2)} on delivery.`);
+        navigate("/profile/orders");
+    } catch (error) {
+        console.error(error);
+        dispatch({ type: "IS_SUCCESS" });
+        toast.error(error?.response?.data?.message || "Failed to place order");
+    }
+};
 
 export const fetchUserOrders = () => async (dispatch) => {
     try {
@@ -746,6 +774,66 @@ export const changeSellerPassword =
       toast.error(
         err?.response?.data?.message || "Failed to update password"
       );
+    } finally {
+      setLoader(false);
+    }
+  };
+
+export const getAllAdminUsers = (queryString) => async (dispatch) => {
+  try {
+    dispatch({ type: "IS_FETCHING" });
+    const { data } = await api.get(`/admin/users?${queryString}`);
+    dispatch({
+      type: "GET_ADMIN_USERS",
+      payload: data["content"],
+      pageNumber: data["pageNumber"],
+      pageSize: data["pageSize"],
+      totalElements: data["totalElements"],
+      totalPages: data["totalPages"],
+      lastPage: data["lastPage"],
+    });
+    dispatch({ type: "IS_SUCCESS" });
+  } catch (err) {
+    dispatch({
+      type: "IS_ERROR",
+      payload: err?.response?.data?.message || "Failed to fetch users",
+    });
+  }
+};
+
+export const deleteAdminUser =
+  (userId, toast, setLoader, setOpen) => async (dispatch, getState) => {
+    try {
+      setLoader(true);
+      await api.delete(`/admin/users/${userId}`);
+      toast.success("User deleted successfully");
+      setOpen(false);
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page") || 1;
+      const keyword = params.get("keyword") || "";
+      let queryString = `pageNumber=${page - 1}&pageSize=10&sortBy=userId&sortOrder=asc`;
+      if (keyword) queryString += `&keyword=${keyword}`;
+      await dispatch(getAllAdminUsers(queryString));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to delete user");
+    } finally {
+      setLoader(false);
+    }
+  };
+
+export const updateSellerCategory =
+  (sellerId, categoryId, toast, setLoader, setOpen) => async (dispatch) => {
+    try {
+      setLoader(true);
+      await api.put(`/admin/sellers/${sellerId}/category`, { categoryId });
+      toast.success("Category updated successfully");
+      setOpen(false);
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page") || 1;
+      const queryString = `pageNumber=${page - 1}`;
+      await dispatch(getAllSellersDashboard(queryString));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update category");
     } finally {
       setLoader(false);
     }

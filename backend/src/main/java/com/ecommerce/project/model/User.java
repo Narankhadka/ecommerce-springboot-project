@@ -75,4 +75,12 @@ public class User {
             cascade = {CascadeType.PERSIST, CascadeType.MERGE},
             orphanRemoval = true)
     private Set<Product> products;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assigned_category_id")
+    private Category assignedCategory;
+
+    private String shopName;
+    private String shopLocation;
+    private String phoneNumber;
 }

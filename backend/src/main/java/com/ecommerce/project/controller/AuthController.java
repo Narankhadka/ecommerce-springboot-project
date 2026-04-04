@@ -220,6 +220,15 @@ public class AuthController {
                     sellerMap.put("userId", seller.getUserId());
                     sellerMap.put("userName", seller.getUserName());
                     sellerMap.put("email", seller.getEmail());
+                    sellerMap.put("shopName", seller.getShopName());
+                    sellerMap.put("shopLocation", seller.getShopLocation());
+                    sellerMap.put("phoneNumber", seller.getPhoneNumber());
+                    sellerMap.put("assignedCategoryId",
+                            seller.getAssignedCategory() != null
+                                    ? seller.getAssignedCategory().getCategoryId() : null);
+                    sellerMap.put("assignedCategoryName",
+                            seller.getAssignedCategory() != null
+                                    ? seller.getAssignedCategory().getCategoryName() : null);
                     sellerMap.put("roles", seller.getRoles().stream()
                             .map(r -> r.getRoleName().name())
                             .collect(Collectors.toList()));

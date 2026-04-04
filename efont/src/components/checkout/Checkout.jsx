@@ -1,9 +1,10 @@
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import AddressInfo from './AddressInfo';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUserAddresses } from '../../store/actions';
+import { getUserAddresses, placeCODOrder } from '../../store/actions';
 import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import Skeleton from '../shared/Skeleton';
 import ErrorPage from '../shared/ErrorPage';
 import PaymentMethod from './PaymentMethod';
@@ -13,9 +14,10 @@ import EsewaPayment from './EsewaPayment';
 const steps = ['Address', 'Payment Method', 'Order Summary', 'Payment'];
 
 const Checkout = () => {
-    const [activeStep, setActiveStep] = useState(0);
+    const [activeStep, setActiveStep] = React.useState(0);
     const dispatch = useDispatch();
-    const { isLoading, errorMessage } = useSelector((state) => state.errors);
+    const navigate = useNavigate();
+    const { isLoading, errorMessage, btnLoader } = useSelector((state) => state.errors);
     const { cart, totalPrice } = useSelector((state) => state.carts);
     const { address, selectedUserCheckoutAddress } = useSelector((state) => state.auth);
     const { paymentMethod } = useSelector((state) => state.payment);
@@ -42,13 +44,31 @@ const Checkout = () => {
             toast.error('Your cart is empty. Please add items before checking out.');
             return;
         }
+
+        // COD: place order directly at Step 2, skip the eSewa payment step
+        if (activeStep === 2 && paymentMethod === 'COD') {
+            dispatch(
+                placeCODOrder(
+                    selectedUserCheckoutAddress?.addressId,
+                    totalPrice,
+                    toast,
+                    navigate
+                )
+            );
+            return;
+        }
+
         setActiveStep((prev) => prev + 1);
     };
 
     const isNextDisabled =
+        btnLoader ||
         errorMessage ||
         (activeStep === 0 && !selectedUserCheckoutAddress) ||
         (activeStep === 1 && !paymentMethod);
+
+    const proceedButtonLabel =
+        activeStep === 2 && paymentMethod === 'COD' ? 'Place Order' : 'Proceed';
 
     const renderPaymentStep = () => {
         return <EsewaPayment />;
@@ -91,13 +111,13 @@ const Checkout = () => {
             >
                 <Button
                     variant='outlined'
-                    disabled={activeStep === 0}
+                    disabled={activeStep === 0 || btnLoader}
                     onClick={handleBack}
                 >
                     Back
                 </Button>
 
-                {/* Hide the "Proceed" button on the last payment step */}
+                {/* Hide the "Proceed" button on the last eSewa payment step */}
                 {activeStep !== steps.length - 1 && (
                     <button
                         disabled={!!isNextDisabled}
@@ -106,7 +126,9 @@ const Checkout = () => {
                         }`}
                         onClick={handleNext}
                     >
-                        Proceed
+                        {btnLoader && activeStep === 2 && paymentMethod === 'COD'
+                            ? 'Placing Order...'
+                            : proceedButtonLabel}
                     </button>
                 )}
             </div>

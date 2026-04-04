@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { MdPersonAdd } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -10,7 +10,8 @@ import Modal from "../../shared/Modal";
 import DeleteModal from "../../shared/DeleteModal";
 import AddSellerForm from "./AddSellerForm";
 import useSellerFilter from "./useSellerFilter";
-import { deleteSeller, changeSellerPassword } from "../../../store/actions";
+import { deleteSeller, changeSellerPassword, updateSellerCategory } from "../../../store/actions";
+import api from "../../../api/api";
 
 const Sellers = () => {
   const dispatch = useDispatch();
@@ -24,10 +25,21 @@ const Sellers = () => {
   const [passwordLoader, setPasswordLoader] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [categoryLoader, setCategoryLoader] = useState(false);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
+  const [categories, setCategories] = useState([]);
+
   const { sellers, pagination } = useSelector((state) => state.seller);
   const { isLoading, errorMessage } = useSelector((state) => state.errors);
 
   useSellerFilter();
+
+  useEffect(() => {
+    api.get("/public/categories?pageSize=100")
+      .then(({ data }) => setCategories(data.content || []))
+      .catch(() => {});
+  }, []);
 
   const emptySellers = !sellers || sellers?.length === 0;
 
@@ -51,6 +63,18 @@ const Sellers = () => {
     e.preventDefault();
     if (!selectedSeller || !newPassword.trim()) return;
     dispatch(changeSellerPassword(selectedSeller.id, newPassword, toast, setPasswordLoader, setPasswordModalOpen));
+  };
+
+  const handleCategoryClick = (row) => {
+    setSelectedSeller(row);
+    setSelectedCategoryId(row.assignedCategoryId || "");
+    setCategoryModalOpen(true);
+  };
+
+  const handleCategorySubmit = (e) => {
+    e.preventDefault();
+    if (!selectedSeller || !selectedCategoryId) return;
+    dispatch(updateSellerCategory(selectedSeller.id, Number(selectedCategoryId), toast, setCategoryLoader, setCategoryModalOpen));
   };
 
   if (errorMessage) {
@@ -89,6 +113,7 @@ const Sellers = () => {
               pagination={pagination}
               onDelete={handleDeleteClick}
               onChangePassword={handleChangePasswordClick}
+              onCategoryUpdate={handleCategoryClick}
             />
           )}
         </>
@@ -145,6 +170,67 @@ const Sellers = () => {
                   className="px-4 py-2 text-sm font-semibold rounded-md bg-custom-blue text-white hover:bg-blue-800"
                 >
                   {passwordLoader ? "Saving..." : "Save"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {categoryModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="fixed inset-0 bg-gray-500 bg-opacity-75"
+            onClick={() => setCategoryModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md z-10">
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">
+              Assign Category
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">
+              Seller: {selectedSeller?.username}
+            </p>
+            <form onSubmit={handleCategorySubmit} className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-semibold text-slate-800">
+                  Category
+                </label>
+                {selectedSeller?.assignedCategoryName && (
+                  <p className="text-xs text-slate-500 mb-1">
+                    Current:{" "}
+                    <span className="font-semibold text-blue-700">
+                      {selectedSeller.assignedCategoryName}
+                    </span>
+                  </p>
+                )}
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  required
+                  className="px-4 py-2 border border-slate-700 rounded-md text-sm text-slate-800 outline-none bg-transparent"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map((cat) => (
+                    <option key={cat.categoryId} value={cat.categoryId}>
+                      {cat.categoryName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={categoryLoader}
+                  onClick={() => setCategoryModalOpen(false)}
+                  className="px-4 py-2 text-sm font-semibold rounded-md border border-slate-300 text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={categoryLoader || !selectedCategoryId}
+                  className="px-4 py-2 text-sm font-semibold rounded-md bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {categoryLoader ? "Saving..." : "Save"}
                 </button>
               </div>
             </form>

@@ -23,8 +23,6 @@ public class Address {
     @Size(min = 5, message = "Street name must be lease 5 characters")
     private String street;
 
-    @NotBlank
-    @Size(min = 5, message = "building name must be lease 5 characters")
     private String buildingName;
 
     @NotBlank
@@ -42,6 +40,10 @@ public class Address {
     @NotBlank
     @Size(min = 5, message = "pincode name must be lease 3 characters")
     private String pincode;
+
+    private Double latitude;
+    private Double longitude;
+    private String mapAddress;
 
     @ToString.Exclude
     @ManyToOne

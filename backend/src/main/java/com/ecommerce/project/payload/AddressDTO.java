@@ -17,8 +17,6 @@ public class AddressDTO {
     @Size(min = 5, message = "Street name must be at least 5 characters")
     private String street;
 
-    @NotBlank(message = "Building name is required")
-    @Size(min = 5, message = "Building name must be at least 5 characters")
     private String buildingName;
 
     @NotBlank(message = "City is required")
@@ -36,4 +34,8 @@ public class AddressDTO {
     @NotBlank(message = "Pincode is required")
     @Size(min = 5, message = "Pincode must be at least 5 characters")
     private String pincode;
+
+    private Double latitude;
+    private Double longitude;
+    private String mapAddress;
 }

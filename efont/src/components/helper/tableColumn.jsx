@@ -436,52 +436,124 @@ export const categoryTableColumns = (handleEdit, handleDelete) => [
 
 
 //table column for seller in admin panel
-export const sellerTableColumns = (handleDelete, handleChangePassword) => [
+export const sellerTableColumns = (handleDelete, handleChangePassword, handleCategoryUpdate) => [
   {
     disableColumnMenu: true,
     field: "id",
     headerName: "ID",
-    minWidth: 200,
+    minWidth: 100,
     headerAlign: "center",
     align: "center",
     editable: false,
     headerClassName: "text-black font-semibold border",
     cellClassName: "text-slate-700 font-normal border",
-    renderHeader: (params) => <span className="text-center">SellerID</span>,
+    renderHeader: () => <span className="text-center">SellerID</span>,
   },
   {
     disableColumnMenu: true,
     field: "username",
     headerName: "UserName",
-    minWidth: 200,
+    minWidth: 140,
     headerAlign: "center",
     align: "center",
     editable: false,
     sortable: false,
     headerClassName: "text-black font-semibold border",
     cellClassName: "text-slate-700 font-normal border",
-    renderHeader: (params) => <span className="text-center">UserName</span>,
+    renderHeader: () => <span className="text-center">UserName</span>,
   },
   {
     disableColumnMenu: true,
     field: "email",
     headerName: "Email",
     align: "center",
-    minWidth: 250,
+    minWidth: 220,
     editable: false,
     sortable: false,
     headerAlign: "center",
-    headerClassName: "text-black font-semibold text-center border ",
+    headerClassName: "text-black font-semibold text-center border",
     cellClassName: "text-slate-700 font-normal border text-center",
-    renderHeader: (params) => <span>Email</span>,
+    renderHeader: () => <span>Email</span>,
+    renderCell: (params) => (
+      <div className="flex items-center justify-center gap-1">
+        <MdOutlineEmail className="text-slate-700 text-lg" />
+        <span>{params?.row?.email}</span>
+      </div>
+    ),
+  },
+  {
+    disableColumnMenu: true,
+    field: "shopName",
+    headerName: "Shop Name",
+    minWidth: 150,
+    headerAlign: "center",
+    align: "center",
+    editable: false,
+    sortable: false,
+    headerClassName: "text-black font-semibold border",
+    cellClassName: "text-slate-700 font-normal border",
+    renderHeader: () => <span>Shop Name</span>,
+    renderCell: (params) => (
+      <span>{params.row.shopName || "-"}</span>
+    ),
+  },
+  {
+    disableColumnMenu: true,
+    field: "shopLocation",
+    headerName: "Location",
+    minWidth: 140,
+    headerAlign: "center",
+    align: "center",
+    editable: false,
+    sortable: false,
+    headerClassName: "text-black font-semibold border",
+    cellClassName: "text-slate-700 font-normal border",
+    renderHeader: () => <span>Location</span>,
+    renderCell: (params) => (
+      <span>{params.row.shopLocation || "-"}</span>
+    ),
+  },
+  {
+    disableColumnMenu: true,
+    field: "phoneNumber",
+    headerName: "Phone",
+    minWidth: 130,
+    headerAlign: "center",
+    align: "center",
+    editable: false,
+    sortable: false,
+    headerClassName: "text-black font-semibold border",
+    cellClassName: "text-slate-700 font-normal border",
+    renderHeader: () => <span>Phone</span>,
+    renderCell: (params) => (
+      <span>{params.row.phoneNumber || "-"}</span>
+    ),
+  },
+  {
+    disableColumnMenu: true,
+    field: "assignedCategoryName",
+    headerName: "Category",
+    minWidth: 160,
+    headerAlign: "center",
+    align: "center",
+    editable: false,
+    sortable: false,
+    headerClassName: "text-black font-semibold border",
+    cellClassName: "text-slate-700 font-normal border",
+    renderHeader: () => <span>Category</span>,
     renderCell: (params) => {
-      return (
-        <div className="flex items-center justify-center gap-1">
-          <span>
-            <MdOutlineEmail className="text-slate-700 text-lg" />
+      const cat = params.row.assignedCategoryName;
+      if (!cat) {
+        return (
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-300">
+            Not Assigned
           </span>
-          <span>{params?.row?.email}</span>
-        </div>
+        );
+      }
+      return (
+        <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-300">
+          {cat}
+        </span>
       );
     },
   },
@@ -493,22 +565,28 @@ export const sellerTableColumns = (handleDelete, handleChangePassword) => [
     headerClassName: "text-black font-semibold text-center",
     cellClassName: "text-slate-700 font-normal",
     sortable: false,
-    minWidth: 300,
-    renderHeader: (params) => <span>Action</span>,
+    minWidth: 340,
+    renderHeader: () => <span>Action</span>,
     renderCell: (params) => {
       return (
         <div className="flex justify-center items-center space-x-2 h-full pt-2">
           <button
+            onClick={() => handleCategoryUpdate(params.row)}
+            className="flex items-center bg-indigo-500 hover:bg-indigo-600 text-white px-3 h-9 rounded-md text-sm"
+          >
+            Category
+          </button>
+          <button
             onClick={() => handleChangePassword(params.row)}
-            className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-4 h-9 rounded-md"
+            className="flex items-center bg-blue-500 hover:bg-blue-600 text-white px-3 h-9 rounded-md text-sm"
           >
             Password
           </button>
           <button
             onClick={() => handleDelete(params.row)}
-            className="flex items-center bg-red-500 hover:bg-red-600 text-white px-4 h-9 rounded-md"
+            className="flex items-center bg-red-500 hover:bg-red-600 text-white px-3 h-9 rounded-md text-sm"
           >
-            <FaTrashAlt className="mr-2" />
+            <FaTrashAlt className="mr-1" />
             Delete
           </button>
         </div>

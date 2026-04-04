@@ -30,6 +30,10 @@ import Sellers from './components/admin/sellers/Sellers';
 import Category from './components/admin/categories/Category';
 import Orders from './components/admin/orders/Orders';
 import SellerEarnings from './components/admin/earnings/SellerEarnings';
+import AdminUsers from './components/admin/users/AdminUsers';
+import SellerProfile from './components/admin/sellers/SellerProfile';
+import AdminPromotions from './components/admin/promotions/AdminPromotions';
+import PromoPopup from './components/shared/PromoPopup';
 
 function App() {
   const dispatch = useDispatch();
@@ -83,9 +87,13 @@ function App() {
               <Route path='orders' element={<Orders />} />
               <Route path='categories' element={<Category />} />
               <Route path='seller-earnings' element={<SellerEarnings />} />
+              <Route path='users' element={<AdminUsers />} />
+              <Route path='seller-profile' element={<SellerProfile />} />
+              <Route path='promotions' element={<AdminPromotions />} />
             </Route>
           </Route>
         </Routes>
+        <PromoPopup />
         <Footer />
         <LoginPromptModal />
       </Router>

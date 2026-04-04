@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import { sellerTableColumns } from "../../helper/tableColumn";
 
-const SellerTable = ({ sellers, pagination, onDelete, onChangePassword }) => {
+const SellerTable = ({ sellers, pagination, onDelete, onChangePassword, onCategoryUpdate }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const pathname = useLocation().pathname;
@@ -15,6 +15,11 @@ const SellerTable = ({ sellers, pagination, onDelete, onChangePassword }) => {
       id: item.userId,
       username: item.userName,
       email: item.email,
+      shopName: item.shopName || null,
+      shopLocation: item.shopLocation || null,
+      phoneNumber: item.phoneNumber || null,
+      assignedCategoryId: item.assignedCategoryId || null,
+      assignedCategoryName: item.assignedCategoryName || null,
     };
   });
 
@@ -26,7 +31,7 @@ const SellerTable = ({ sellers, pagination, onDelete, onChangePassword }) => {
     navigate(`${pathname}?${params}`);
   };
 
-  const columns = sellerTableColumns(onDelete, onChangePassword);
+  const columns = sellerTableColumns(onDelete, onChangePassword, onCategoryUpdate);
 
   return (
     <div>

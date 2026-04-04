@@ -10,6 +10,12 @@ const PAYMENT_OPTIONS = [
         description: 'Pay via eSewa mobile wallet (sandbox)',
         color: '#60BB46',
     },
+    {
+        value: 'COD',
+        label: 'Cash on Delivery',
+        description: 'Pay with cash when your order arrives',
+        color: '#374151',
+    },
 ];
 
 const PaymentMethod = () => {
@@ -18,7 +24,7 @@ const PaymentMethod = () => {
     const { cart, cartId } = useSelector((state) => state.carts);
     const { errorMessage } = useSelector((state) => state.errors);
 
-    // Auto-select eSewa (the only payment method)
+    // Auto-select eSewa as the default payment method
     useEffect(() => {
         if (!paymentMethod) {
             dispatch(addPaymentMethod('eSewa'));

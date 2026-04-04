@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer
@@ -6,6 +6,11 @@ import {
 import api from '../../../api/api';
 import { formatNPR } from '../../../utils/formatPrice';
 import Loader from '../../shared/Loader';
+
+const MONTH_NAMES = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+];
 
 const statusColors = {
     Placed: 'bg-blue-100 text-blue-700',
@@ -38,17 +43,98 @@ const CustomTooltip = ({ active, payload, label }) => {
     return null;
 };
 
+const buildFilterSummary = (year, month, day) => {
+    if (!year) return null;
+    const monthName = month ? MONTH_NAMES[month - 1] : null;
+    if (day && monthName) return `${day} ${monthName} ${year}`;
+    if (monthName) return `${monthName} ${year}`;
+    return `${year}`;
+};
+
+const currentYear = new Date().getFullYear();
+const yearOptions = [];
+for (let y = currentYear; y >= 2023; y--) {
+    yearOptions.push(y);
+}
+
 const SellerEarnings = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        api.get('/seller/earnings')
+    const [selectedYear, setSelectedYear] = useState('');
+    const [selectedMonth, setSelectedMonth] = useState('');
+    const [selectedDay, setSelectedDay] = useState('');
+    const [appliedYear, setAppliedYear] = useState('');
+    const [appliedMonth, setAppliedMonth] = useState('');
+    const [appliedDay, setAppliedDay] = useState('');
+
+    const fetchEarnings = (year, month, day) => {
+        setLoading(true);
+        setError(null);
+        const params = {};
+        if (year) params.year = year;
+        if (month) params.month = month;
+        if (day) params.day = day;
+        api.get('/seller/earnings', { params })
             .then(res => setData(res.data))
             .catch(err => setError(err?.response?.data?.message || 'Failed to load earnings'))
             .finally(() => setLoading(false));
-    }, []);
+    };
+
+    // Initial fetch on mount — no filters
+    useState(() => {
+        fetchEarnings('', '', '');
+    });
+
+    const handleApplyFilter = () => {
+        setAppliedYear(selectedYear);
+        setAppliedMonth(selectedMonth);
+        setAppliedDay(selectedDay);
+        fetchEarnings(selectedYear, selectedMonth, selectedDay);
+    };
+
+    const handleClearFilter = () => {
+        setSelectedYear('');
+        setSelectedMonth('');
+        setSelectedDay('');
+        setAppliedYear('');
+        setAppliedMonth('');
+        setAppliedDay('');
+        fetchEarnings('', '', '');
+    };
+
+    const handleYearChange = (e) => {
+        setSelectedYear(e.target.value);
+        setSelectedMonth('');
+        setSelectedDay('');
+    };
+
+    const handleMonthChange = (e) => {
+        setSelectedMonth(e.target.value);
+        setSelectedDay('');
+    };
+
+    const filterSummary = buildFilterSummary(appliedYear, appliedMonth, appliedDay);
+
+    const dropdownStyle = {
+        border: '1px solid #e5e7eb',
+        borderRadius: '8px',
+        padding: '8px 12px',
+        fontSize: '0.9rem',
+        cursor: 'pointer',
+        minWidth: '140px',
+        backgroundColor: '#fff',
+        color: '#1e293b',
+        outline: 'none',
+    };
+
+    const disabledDropdownStyle = {
+        ...dropdownStyle,
+        backgroundColor: '#f9fafb',
+        color: '#9ca3af',
+        cursor: 'not-allowed',
+    };
 
     if (loading) return <Loader />;
     if (error) return (
@@ -64,6 +150,67 @@ const SellerEarnings = () => {
     return (
         <div className='max-w-6xl mx-auto py-8 space-y-8'>
             <h1 className='text-2xl font-bold text-slate-800'>Earnings Overview</h1>
+
+            {/* Date Filter */}
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '24px' }}>
+                <select
+                    value={selectedYear}
+                    onChange={handleYearChange}
+                    style={dropdownStyle}
+                >
+                    <option value=''>All Years</option>
+                    {yearOptions.map(y => (
+                        <option key={y} value={y}>{y}</option>
+                    ))}
+                </select>
+
+                <select
+                    value={selectedMonth}
+                    onChange={handleMonthChange}
+                    disabled={!selectedYear}
+                    style={selectedYear ? dropdownStyle : disabledDropdownStyle}
+                >
+                    <option value=''>All Months</option>
+                    {MONTH_NAMES.map((name, i) => (
+                        <option key={i + 1} value={i + 1}>{name}</option>
+                    ))}
+                </select>
+
+                <select
+                    value={selectedDay}
+                    onChange={(e) => setSelectedDay(e.target.value)}
+                    disabled={!selectedMonth}
+                    style={selectedMonth ? dropdownStyle : disabledDropdownStyle}
+                >
+                    <option value=''>All Days</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
+                        <option key={d} value={d}>{d}</option>
+                    ))}
+                </select>
+
+                <button
+                    onClick={handleApplyFilter}
+                    className='bg-custom-blue hover:bg-blue-800 text-white font-semibold py-2 px-4 rounded-lg text-sm transition-colors'
+                >
+                    Apply Filter
+                </button>
+
+                {(appliedYear || appliedMonth || appliedDay) && (
+                    <button
+                        onClick={handleClearFilter}
+                        className='border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold py-2 px-4 rounded-lg text-sm transition-colors'
+                    >
+                        Clear Filter
+                    </button>
+                )}
+            </div>
+
+            {/* Filter Summary */}
+            {filterSummary && (
+                <div className='text-sm text-slate-600 font-medium -mt-4'>
+                    Showing earnings for: <span className='text-blue-600 font-semibold'>{filterSummary}</span>
+                </div>
+            )}
 
             {/* SECTION 1 — Summary Cards */}
             <div className='grid grid-cols-2 lg:grid-cols-4 gap-4'>

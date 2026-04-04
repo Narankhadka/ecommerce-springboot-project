@@ -10,7 +10,9 @@ public class AppConfig {
 
     @Bean
     public ModelMapper modelMapper() {
-        return new ModelMapper();
+        ModelMapper mapper = new ModelMapper();
+        mapper.getConfiguration().setAmbiguityIgnored(true);
+        return mapper;
     }
 
     /** Used by PaymentController to call Khalti and eSewa APIs. */

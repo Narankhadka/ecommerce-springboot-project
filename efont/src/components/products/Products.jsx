@@ -1,12 +1,13 @@
 import { FaExclamationTriangle } from "react-icons/fa";
 import ProductCard from "../shared/ProductCard";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { fetchCategories } from "../../store/actions";
 import Filter from "./Filter";
 import useProductFilter from "../../hooks/useProductFilter";
 import Loader from "../shared/Loader";
 import Paginations from "../shared/Paginations";
+import ProductViewModal from "../shared/ProductViewModal";
 
 const Products = () => {
     const { isLoading, errorMessage } = useSelector(
@@ -18,9 +19,33 @@ const Products = () => {
     const dispatch = useDispatch();
     useProductFilter();
 
+    const [autoOpenProduct, setAutoOpenProduct] = useState(null);
+    const [autoOpenModal, setAutoOpenModal] = useState(false);
+
     useEffect(() => {
         dispatch(fetchCategories());
     }, [dispatch]);
+
+    useEffect(() => {
+        if (!products || products.length === 0) return;
+        const openId = localStorage.getItem('openProductId');
+        if (!openId) return;
+        localStorage.removeItem('openProductId');
+        const found = products.find((p) => String(p.productId) === String(openId));
+        if (found) {
+            setAutoOpenProduct({
+                id: found.productId,
+                productName: found.productName,
+                image: found.image,
+                description: found.description,
+                quantity: found.quantity,
+                price: found.price,
+                discount: found.discount,
+                specialPrice: found.specialPrice,
+            });
+            setAutoOpenModal(true);
+        }
+    }, [products]);
 
     return (
         <div className="lg:px-14 sm:px-8 px-4 py-14 2xl:w-[90%] 2xl:mx-auto">
@@ -44,12 +69,18 @@ const Products = () => {
                         }
                     </div>
                     <div className="flex justify-center pt-10">
-                        <Paginations 
+                        <Paginations
                             numberOfPage = {pagination?.totalPages}
                             totalProducts = {pagination?.totalElements}/>
                     </div>
                 </div>
             )}
+
+            <ProductViewModal
+                open={autoOpenModal}
+                setOpen={setAutoOpenModal}
+                product={autoOpenProduct}
+            />
         </div>
     )
 }

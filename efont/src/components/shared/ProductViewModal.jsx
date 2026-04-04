@@ -255,17 +255,27 @@ function ProductViewModal({open, setOpen, product}) {
 
                   <div className="space-y-2 text-gray-700 pb-4">
                     <div className="flex items-center justify-between gap-2">
-                      {specialPrice ? (
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-400 line-through">
+                      {discount > 0 ? (
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ textDecoration: 'line-through', color: '#9ca3af' }}>
                             {formatNPR(price)}
                           </span>
-                          <span className="sm:text-xl font-semibold text-slate-700">
+                          <span style={{ color: '#dc2626', fontWeight: '700', fontSize: '1.5rem' }}>
                             {formatNPR(specialPrice)}
+                          </span>
+                          <span style={{
+                            backgroundColor: '#dcfce7',
+                            color: '#166534',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                          }}>
+                            Save {discount}%
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xl font-bold">
+                        <span style={{ fontWeight: '700', fontSize: '1.5rem' }}>
                           {formatNPR(price)}
                         </span>
                       )}

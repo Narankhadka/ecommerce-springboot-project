@@ -54,6 +54,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     boolean existsByEmailAndProductDelivered(@Param("email") String email,
                                              @Param("productId") Long productId);
 
+    @Query("SELECT COUNT(o) FROM Order o WHERE o.email = " +
+           "(SELECT u.email FROM User u WHERE u.userId = :userId)")
+    long countByUserUserId(@Param("userId") Long userId);
+
     @Query("SELECT oi FROM OrderItem oi " +
            "JOIN oi.product p " +
            "WHERE p.seller.userId = :sellerId " +

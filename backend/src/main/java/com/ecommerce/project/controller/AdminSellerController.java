@@ -1,6 +1,6 @@
 package com.ecommerce.project.controller;
 
-import com.ecommerce.project.security.request.SignupRequest;
+import com.ecommerce.project.security.request.RegisterSellerRequest;
 import com.ecommerce.project.security.response.MessageResponse;
 import com.ecommerce.project.serviceInterface.AdminSellerService;
 import jakarta.validation.Valid;
@@ -22,11 +22,16 @@ public class AdminSellerController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<MessageResponse> registerSeller(@Valid @RequestBody SignupRequest request) {
+    public ResponseEntity<MessageResponse> registerSeller(
+            @Valid @RequestBody RegisterSellerRequest request) {
         adminSellerService.registerSeller(
                 request.getUsername(),
                 request.getEmail(),
-                request.getPassword());
+                request.getPassword(),
+                request.getCategoryId(),
+                request.getShopName(),
+                request.getShopLocation(),
+                request.getPhoneNumber());
         return ResponseEntity.ok(new MessageResponse("Seller registered successfully!"));
     }
 
@@ -46,6 +51,17 @@ public class AdminSellerController {
         adminSellerService.changeSellerPassword(sellerId, newPassword);
         Map<String, String> response = new HashMap<>();
         response.put("message", "Password updated");
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PutMapping("/{sellerId}/category")
+    public ResponseEntity<Map<String, String>> assignCategory(
+            @PathVariable Long sellerId,
+            @RequestBody Map<String, Long> request) {
+        Long categoryId = request.get("categoryId");
+        adminSellerService.assignCategory(sellerId, categoryId);
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Category assigned successfully");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

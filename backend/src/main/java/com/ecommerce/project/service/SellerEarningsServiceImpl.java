@@ -29,11 +29,22 @@ public class SellerEarningsServiceImpl {
     private UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public EarningsDTO getSellerEarnings(String sellerUsername) {
+    public EarningsDTO getSellerEarnings(String sellerUsername,
+                                         Integer day, Integer month, Integer year) {
         User seller = userRepository.findByUserName(sellerUsername)
                 .orElseThrow(() -> new RuntimeException("Seller not found: " + sellerUsername));
 
-        List<OrderItem> items = orderRepository.findOrderItemsBySellerId(seller.getUserId());
+        List<OrderItem> allItems = orderRepository.findOrderItemsBySellerId(seller.getUserId());
+
+        List<OrderItem> items = allItems.stream()
+                .filter(oi -> {
+                    java.time.LocalDate date = oi.getOrder().getOrderDate();
+                    if (year != null && date.getYear() != year) return false;
+                    if (month != null && date.getMonthValue() != month) return false;
+                    if (day != null && date.getDayOfMonth() != day) return false;
+                    return true;
+                })
+                .collect(Collectors.toList());
 
         // Total earnings — all statuses except Cancelled
         double totalEarnings = items.stream()
@@ -47,7 +58,7 @@ public class SellerEarningsServiceImpl {
                 .mapToDouble(oi -> oi.getOrderedProductPrice() * oi.getQuantity())
                 .sum();
 
-        // Pending — everything active (not Cancelled, not Delivered)
+        // Pending — everything active (not Canceled, not Delivered)
         double pendingEarnings = totalEarnings - receivedEarnings;
 
         // Monthly breakdown (non-cancelled)
@@ -56,8 +67,8 @@ public class SellerEarningsServiceImpl {
         items.stream()
                 .filter(oi -> !oi.getOrder().getOrderStatus().equals("Cancelled"))
                 .forEach(oi -> {
-                    String month = oi.getOrder().getOrderDate().format(fmt);
-                    monthlyMap.merge(month,
+                    String monthKey = oi.getOrder().getOrderDate().format(fmt);
+                    monthlyMap.merge(monthKey,
                             oi.getOrderedProductPrice() * oi.getQuantity(),
                             Double::sum);
                 });

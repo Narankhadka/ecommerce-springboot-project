@@ -17,6 +17,7 @@ const [loader, setLoader] = useState(false);
 const [selectedCategory, setSelectedCategory] = useState();
 const [sellers, setSellers] = useState([]);
 const [selectedSeller, setSelectedSeller] = useState(null);
+const [sellerProfile, setSellerProfile] = useState(null);
 const { categories } = useSelector((state) => state.products);
 const { categoryLoader, errorMessage } = useSelector((state) => state.errors);
 const { user } = useSelector((state) => state.auth);
@@ -36,9 +37,12 @@ const dispatch = useDispatch();
     const saveProductHandler = (data) => {
         if(!update) {
             // create new product logic
+            const categoryId = isAdmin
+                ? selectedCategory?.categoryId
+                : sellerProfile?.assignedCategoryId;
             const sendData = {
                 ...data,
-                categoryId: selectedCategory.categoryId,
+                categoryId,
                 ...(isAdmin && selectedSeller ? { sellerId: selectedSeller.userId } : {}),
             };
             dispatch(addNewProductFromDashboard(
@@ -91,6 +95,14 @@ const dispatch = useDispatch();
         }
     }, [categories, categoryLoader]);
 
+    useEffect(() => {
+        if (!isAdmin && !update) {
+            api.get('/seller/profile')
+                .then(({ data }) => setSellerProfile(data))
+                .catch(() => {});
+        }
+    }, [isAdmin, update]);
+
     if (categoryLoader) return <Skeleton />
     if (errorMessage) return <ErrorPage message={errorMessage} />
 
@@ -110,13 +122,23 @@ const dispatch = useDispatch();
                     errors={errors}
                     />
 
-                {!update && (
+                {!update && isAdmin && (
                     <SelectTextField
                         label="Select Categories"
                         select={selectedCategory}
                         setSelect={setSelectedCategory}
                         lists={categories}
                     />
+                )}
+                {!update && !isAdmin && (
+                    <div className="flex flex-col gap-1">
+                        <label className="font-semibold text-sm text-slate-800">
+                            Your Category
+                        </label>
+                        <div className="px-4 py-2 border border-slate-300 rounded-md text-sm text-slate-500 bg-gray-50">
+                            {sellerProfile?.assignedCategoryName || 'Loading...'}
+                        </div>
+                    </div>
                 )}
             </div>
 

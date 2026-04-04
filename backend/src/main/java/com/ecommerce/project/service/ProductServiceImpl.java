@@ -99,16 +99,22 @@ public class ProductServiceImpl implements ProductService {
             product.setSpecialPrice(specialPrice);
 
             if (productDTO.getSellerId() != null) {
-                // Admin is assigning a specific seller
+                // Admin is assigning a specific seller — use categoryId from request
                 User seller = userRepository.findById(productDTO.getSellerId())
                         .orElseThrow(() -> new RuntimeException("Seller not found"));
                 product.setSeller(seller);
+                product.setCategory(category);
             } else {
-                // Seller is adding their own product — auto-assign from authenticated user
+                // Seller is adding their own product — use their assigned category
                 String username = SecurityContextHolder.getContext().getAuthentication().getName();
                 User seller = userRepository.findByUserName(username)
                         .orElseThrow(() -> new RuntimeException("Seller not found"));
+                if (seller.getAssignedCategory() == null) {
+                    throw new com.ecommerce.project.exceptions.APIException(
+                            "No category assigned to your account. Contact admin.");
+                }
                 product.setSeller(seller);
+                product.setCategory(seller.getAssignedCategory());
             }
 
             Product savedProduct = productRepository.save(product);

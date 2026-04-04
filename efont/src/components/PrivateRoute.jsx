@@ -23,7 +23,7 @@ const PrivateRoute = ({ publicPage = false, adminOnly = false }) => {
     if (adminOnly) {
         // Sellers get limited access to orders and products pages only
         if (isSeller && !isAdmin) {
-            const sellerAllowedPaths = ["/admin/orders", "/admin/products", "/admin/seller-dashboard", "/admin/seller-earnings"];
+            const sellerAllowedPaths = ["/admin/orders", "/admin/products", "/admin/seller-dashboard", "/admin/seller-earnings", "/admin/seller-profile"];
             const sellerAllowed = sellerAllowedPaths.some(path =>
                 location.pathname.startsWith(path)
             );
