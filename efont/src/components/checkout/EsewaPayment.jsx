@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { initiateEsewaPayment } from '../../store/actions';
+import api from '../../api/api';
 import toast from 'react-hot-toast';
 
 /**
@@ -11,7 +12,7 @@ import toast from 'react-hot-toast';
  */
 const EsewaPayment = () => {
     const dispatch = useDispatch();
-    const { totalPrice } = useSelector((state) => state.carts);
+    const { cart, totalPrice } = useSelector((state) => state.carts);
     const [loading, setLoading] = useState(false);
     const [formParams, setFormParams] = useState(null);
     const formRef = useRef(null);
@@ -19,23 +20,53 @@ const EsewaPayment = () => {
     const esewaPaymentUrl = import.meta.env.VITE_ESEWA_PAYMENT_URL ||
         'https://rc-epay.esewa.com.np/api/epay/main/v2/form';
 
+    // Submit the form as soon as React has painted it into the DOM.
+    // This is reliable — no race condition with arbitrary setTimeout.
+    useEffect(() => {
+        if (formParams && formRef.current) {
+            formRef.current.submit();
+        }
+    }, [formParams]);
+
     const handleEsewaPay = async () => {
         if (!totalPrice || totalPrice <= 0) {
             toast.error('Invalid order amount');
             return;
         }
 
-        const params = await dispatch(initiateEsewaPayment(totalPrice, setLoading, toast));
-        if (!params) return; // Error already shown by action
+        if (!cart || cart.length === 0) {
+            toast.error('Your cart is empty');
+            return;
+        }
 
-        setFormParams(params);
-
-        // Submit the form on the next render tick so the hidden form is mounted
-        setTimeout(() => {
-            if (formRef.current) {
-                formRef.current.submit();
+        setLoading(true);
+        try {
+            // Sync Redux cart to backend so placeOrder() finds items after eSewa callback.
+            // Use direct API call instead of dispatching createUserCart() — that action
+            // dispatches IS_FETCHING which sets isLoading=true in Checkout, which unmounts
+            // this component mid-flight and nulls out formRef.
+            const cartItemsToSync = cart.map((item) => ({
+                productId: item.productId,
+                quantity: item.quantity || 1,
+            }));
+            try {
+                await api.post('/cart/create', cartItemsToSync);
+            } catch {
+                // Items already in backend cart — safe to continue
             }
-        }, 100);
+
+            const params = await dispatch(initiateEsewaPayment(totalPrice, () => {}, toast));
+            if (!params) return;
+
+            // Setting formParams triggers the useEffect above which submits the form
+            // after React has rendered it into the DOM.
+            setFormParams(params);
+        } catch (err) {
+            console.error('eSewa payment error:', err);
+            toast.error('Failed to initiate eSewa payment');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -73,7 +104,7 @@ const EsewaPayment = () => {
                 {loading ? 'Redirecting to eSewa...' : `Pay NPR ${Number(totalPrice).toFixed(2)}`}
             </button>
 
-            {/* Hidden form — submitted programmatically after backend returns params */}
+            {/* Hidden form — submitted via useEffect once formParams is set and DOM is ready */}
             {formParams && (
                 <form
                     ref={formRef}

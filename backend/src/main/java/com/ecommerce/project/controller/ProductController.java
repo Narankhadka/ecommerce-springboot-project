@@ -4,7 +4,9 @@ import com.ecommerce.project.config.AppConstants;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.serviceInterface.ProductService;
+import com.ecommerce.project.serviceInterface.RecommendationService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -20,6 +22,9 @@ public class ProductController {
 
 
     private final ProductService productService;
+
+    @Autowired
+    private RecommendationService recommendationService;
 
     public ProductController(ProductService productService) {
         this.productService = productService;
@@ -39,7 +44,7 @@ public class ProductController {
 
     @GetMapping("/public/products/{productId}/recommendations")
     public ResponseEntity<List<ProductDTO>> getRecommendations(@PathVariable Long productId) {
-        return ResponseEntity.ok(productService.getRecommendations(productId));
+        return ResponseEntity.ok(recommendationService.getRecommendations(productId));
     }
 
     //Get all products (with optional keyword and category filters)

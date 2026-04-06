@@ -33,7 +33,5 @@ public interface ProductService {
 
     List<ProductDTO> getTopSellingProducts();
 
-    List<ProductDTO> getRecommendations(Long productId);
-
     List<ProductDTO> getRandomProducts(Integer count);
 }

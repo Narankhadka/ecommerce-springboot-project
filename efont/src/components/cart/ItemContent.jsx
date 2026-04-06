@@ -19,29 +19,41 @@ const ItemContent = ({
     cartId,
   }) => {
     const [currentQuantity, setCurrentQuantity] = useState(quantity);
+    const [isUpdating, setIsUpdating] = useState(false);
     const dispatch = useDispatch();
 
-    const handleQtyIncrease = (cartItems) => {
-        dispatch(increaseCartQuantity(
-            cartItems,
-            toast,
-            currentQuantity,
-            setCurrentQuantity
-        ));
+    const handleQtyIncrease = async (cartItems) => {
+        if (isUpdating) return;
+        setIsUpdating(true);
+        try {
+            await dispatch(increaseCartQuantity(
+                cartItems,
+                toast,
+                currentQuantity,
+                setCurrentQuantity
+            ));
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
-    const handleQtyDecrease = (cartItems) => {
-        if (currentQuantity > 1) {
+    const handleQtyDecrease = async (cartItems) => {
+        if (isUpdating) return;
+        if (currentQuantity <= 1) return;
+        setIsUpdating(true);
+        try {
             const newQuantity = currentQuantity - 1;
             setCurrentQuantity(newQuantity);
-            dispatch(decreaseCartQuantity(cartItems, newQuantity));
+            await dispatch(decreaseCartQuantity(cartItems, newQuantity));
+        } finally {
+            setIsUpdating(false);
         }
     };
 
     const removeItemFromCart = (cartItems) => {
         dispatch(removeFromCart(cartItems, toast));
     };
-    
+
     return (
         <div className="grid md:grid-cols-5 grid-cols-4 md:text-md text-sm gap-4   items-center  border border-slate-200  rounded-md  lg:px-4  py-4 p-2">
             <div className="md:col-span-2 justify-self-start flex  flex-col gap-2 ">
@@ -52,11 +64,11 @@ const ItemContent = ({
                 </div>
 
                 <div className="md:w-36 sm:w-24 w-12">
-                    <img 
+                    <img
                         src={`${import.meta.env.VITE_BACK_END_URL}/images/${image}`}
                         alt={productName}
                         className="md:h-36 sm:h-24 h-12 w-full object-cover rounded-md"/>
-                
+
 
                 <div className="flex items-start gap-5 mt-3">
                     <button
@@ -82,9 +94,10 @@ const ItemContent = ({
             </div>
 
             <div className="justify-self-center">
-                <SetQuantity 
+                <SetQuantity
                     quantity={currentQuantity}
                     cardCounter={true}
+                    updating={isUpdating}
                     handeQtyIncrease={() => handleQtyIncrease({
                         image,
                         productName,

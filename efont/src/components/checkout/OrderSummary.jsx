@@ -47,21 +47,25 @@ const OrderSummary = ({ totalPrice, cart, address, paymentMethod}) => {
         <div className='pb-4 border rounded-lg shadow-xs mb-6'>
             <h2 className='text-2xl font-semibold mb-2'>Order Items</h2>
             <div className='space-y-2'>
-                {cart?.map((item) => (
+                {cart?.map((item) => {
+                    const itemPrice = item?.specialPrice || item?.productPrice || item?.price || 0;
+                    const itemQty = item?.quantity || 1;
+                    return (
                     <div key={item?.productId} className='flex items-center'>
                         <img src={`${import.meta.env.VITE_BACK_END_URL}/images/${
                             item?.image
                         }`}
                         alt='Product'
-                        className='w-12 h-12 rounded-sm'></img>
+                        className='w-12 h-12 rounded-sm' />
                     <div className='text-gray-500'>
                         <p>{item?.productName}</p>
                         <p>
-                {item?.quantity} x {formatNPR(item?.specialPrice)} = {formatNPR(Number(item?.quantity) * Number(item?.specialPrice))}
+                            {itemQty} x {formatNPR(itemPrice)} = {formatNPR(itemQty * itemPrice)}
                         </p>
                     </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
        </div>

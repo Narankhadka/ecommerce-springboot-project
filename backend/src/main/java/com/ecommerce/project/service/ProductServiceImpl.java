@@ -30,7 +30,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -378,34 +377,6 @@ public class ProductServiceImpl implements ProductService {
         return products.stream()
                 .map(this::mapToDTO)
                 .toList();
-    }
-
-    @Override
-    @Transactional
-    public List<ProductDTO> getRecommendations(Long productId) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new ResourceNotFoundException("Product", "productId", productId));
-
-        Pageable top4 = PageRequest.of(0, 4);
-
-        List<Product> alsoBought = productRepository.findCustomersAlsoBought(productId, top4);
-
-        int remaining = 8 - alsoBought.size();
-        List<Product> sameCategory = productRepository.findSameCategoryProducts(
-                product.getCategory(),
-                productId,
-                PageRequest.of(0, remaining));
-
-        List<Product> combined = new ArrayList<>();
-        combined.addAll(alsoBought);
-        sameCategory.stream()
-                .filter(p -> alsoBought.stream()
-                        .noneMatch(a -> a.getProductId().equals(p.getProductId())))
-                .forEach(combined::add);
-
-        return combined.stream()
-                .map(this::mapToDTO)
-                .collect(Collectors.toList());
     }
 
     @Override

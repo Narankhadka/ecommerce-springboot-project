@@ -18,9 +18,10 @@ const Cart = () => {
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [openModal, setOpenModal] = useState(false);
 
-    newCart.totalPrice = cart?.reduce(
-        (acc, cur) => acc + Number(cur?.specialPrice) * Number(cur?.quantity), 0
-    );
+    newCart.totalPrice = cart?.reduce((acc, cur) => {
+        const price = Number(cur?.specialPrice) || Number(cur?.productPrice) || Number(cur?.price) || 0;
+        return acc + price * (Number(cur?.quantity) || 1);
+    }, 0);
 
     useEffect(() => {
         if (!cart || cart.length === 0) {

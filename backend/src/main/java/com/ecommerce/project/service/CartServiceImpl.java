@@ -140,11 +140,25 @@ public class CartServiceImpl implements CartService {
         if (cart == null){
             throw new ResourceNotFoundException("Cart", "cartId", cartId);
         }
+
+        // Recalculate totalPrice from stored cart item prices to fix any drift
+        double recalculatedTotal = cart.getCartItems().stream()
+                .mapToDouble(item -> item.getProductPrice() * item.getQuantity())
+                .sum();
+        if (Double.compare(recalculatedTotal, cart.getTotalPrice()) != 0) {
+            cart.setTotalPrice(recalculatedTotal);
+            cartRepository.save(cart);
+        }
+
         CartDTO cartDTO = modelMapper.map(cart, CartDTO.class);
-        cart.getCartItems().forEach(c ->
-                c.getProduct().setQuantity(c.getQuantity()));
+
+        // Map each CartItem to ProductDTO without mutating the Product entity
         List<ProductDTO> products = cart.getCartItems().stream()
-                .map(p -> modelMapper.map(p.getProduct(), ProductDTO.class))
+                .map(item -> {
+                    ProductDTO productDTO = modelMapper.map(item.getProduct(), ProductDTO.class);
+                    productDTO.setQuantity(item.getQuantity());
+                    return productDTO;
+                })
                 .toList();
         cartDTO.setProducts(products);
         return cartDTO;

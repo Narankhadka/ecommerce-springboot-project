@@ -49,7 +49,7 @@ export const fetchCategories = () => async (dispatch) => {
 
 
 export const addToCart = (data, qty = 1, toast) =>
-    (dispatch, getState) => {
+    async (dispatch, getState) => {
         const { user } = getState().auth;
         if (!user) {
             dispatch({ type: "SHOW_LOGIN_MODAL" });
@@ -68,6 +68,18 @@ export const addToCart = (data, qty = 1, toast) =>
         const isQuantityExist = availableQuantity >= qty;
 
         if (isQuantityExist) {
+            // Persist to backend so the item survives a page refresh.
+            try {
+                await api.post(`/carts/products/${data.productId}/quantity/${qty}`);
+            } catch (error) {
+                const msg = error?.response?.data?.message || "";
+                // "already exists" means it is already in the backend cart — safe to continue.
+                // Any other error (out of stock, product not found, etc.) should abort.
+                if (!msg.toLowerCase().includes("already exists")) {
+                    toast.error(msg || "Failed to add item to cart");
+                    return;
+                }
+            }
             dispatch({ type: "ADD_CART", payload: {...data, quantity: qty} });
             toast.success(`${data?.productName} added to the cart`);
         } else {
@@ -78,31 +90,48 @@ export const addToCart = (data, qty = 1, toast) =>
 
 export const increaseCartQuantity =
     (data, toast, currentQuantity, setCurrentQuantity) =>
-    (dispatch, getState) => {
+    async (dispatch, getState) => {
         const { products } = getState().products;
 
-        const getProduct = products.find(
+        // products reducer is only populated when the /products page has been visited.
+        // If the user navigated directly to /cart, it will be empty and getProduct will
+        // be undefined — crashing on .quantity. Skip the client-side check in that case
+        // and let the backend enforce the stock limit instead.
+        const getProduct = products?.find(
             (item) => item.productId === data.productId
         );
-
-        const isQuantityExist = getProduct.quantity >= currentQuantity + 1;
-
-        if (isQuantityExist) {
-            const newQuantity = currentQuantity + 1;
-            setCurrentQuantity(newQuantity);
-            dispatch({
-                type: "ADD_CART",
-                payload: {...data, quantity: newQuantity },
-            });
-        } else {
+        if (getProduct && getProduct.quantity < currentQuantity + 1) {
             toast.error("Quantity Reached to Limit");
+            return;
         }
+
+        const newQuantity = currentQuantity + 1;
+        try {
+            await api.put(`/carts/products/${data.productId}/quantity/1`);
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Failed to update quantity");
+            return;
+        }
+        setCurrentQuantity(newQuantity);
+        dispatch({
+            type: "ADD_CART",
+            payload: {...data, quantity: newQuantity },
+        });
     };
 
 
 
 export const decreaseCartQuantity =
-    (data, newQuantity) => (dispatch) => {
+    (data, newQuantity) => async (dispatch, getState) => {
+        // Persist quantity decrease to backend.
+        // newQuantity === 0 means remove — handled upstream by removeFromCart.
+        if (newQuantity > 0) {
+            try {
+                await api.put(`/carts/products/${data.productId}/quantity/delete`);
+            } catch {
+                // Non-fatal: keep Redux in sync even if backend call fails
+            }
+        }
         dispatch({
             type: "ADD_CART",
             payload: {...data, quantity: newQuantity},

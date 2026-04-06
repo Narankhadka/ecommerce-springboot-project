@@ -1,5 +1,5 @@
 import { Button, Step, StepLabel, Stepper } from '@mui/material';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import AddressInfo from './AddressInfo';
 import { useDispatch, useSelector } from 'react-redux';
 import { getUserAddresses, placeCODOrder } from '../../store/actions';
@@ -18,7 +18,15 @@ const Checkout = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { isLoading, errorMessage, btnLoader } = useSelector((state) => state.errors);
-    const { cart, totalPrice } = useSelector((state) => state.carts);
+    const { cart } = useSelector((state) => state.carts);
+
+    const calculatedTotal = useMemo(() =>
+        (cart || []).reduce((sum, item) => {
+            const price = item.specialPrice || item.productPrice || item.price || 0;
+            const qty = item.quantity || 1;
+            return sum + price * qty;
+        }, 0),
+    [cart]);
     const { address, selectedUserCheckoutAddress } = useSelector((state) => state.auth);
     const { paymentMethod } = useSelector((state) => state.payment);
 
@@ -50,7 +58,7 @@ const Checkout = () => {
             dispatch(
                 placeCODOrder(
                     selectedUserCheckoutAddress?.addressId,
-                    totalPrice,
+                    calculatedTotal,
                     toast,
                     navigate
                 )
@@ -94,7 +102,7 @@ const Checkout = () => {
                     {activeStep === 1 && <PaymentMethod />}
                     {activeStep === 2 && (
                         <OrderSummary
-                            totalPrice={totalPrice}
+                            totalPrice={calculatedTotal}
                             cart={cart}
                             address={selectedUserCheckoutAddress}
                             paymentMethod={paymentMethod}

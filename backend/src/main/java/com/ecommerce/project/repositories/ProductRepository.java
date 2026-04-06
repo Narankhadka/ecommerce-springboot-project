@@ -63,29 +63,6 @@ public interface ProductRepository extends JpaRepository <Product , Long>{
                                 @Param("category") String category,
                                 Pageable pageable);
 
-    // Used by recommendations — same category, excluding current product, active only
-    @Query("SELECT p FROM Product p " +
-           "WHERE p.category = :category " +
-           "AND p.productId != :productId " +
-           "AND p.active = true " +
-           "ORDER BY p.productId DESC")
-    List<Product> findSameCategoryProducts(
-            @Param("category") Category category,
-            @Param("productId") Long productId,
-            Pageable pageable);
-
-    // Used by recommendations — products bought in the same orders as this product
-    @Query("SELECT DISTINCT oi2.product " +
-           "FROM OrderItem oi1 " +
-           "JOIN OrderItem oi2 " +
-           "  ON oi1.order = oi2.order " +
-           "WHERE oi1.product.productId = :productId " +
-           "AND oi2.product.productId != :productId " +
-           "AND oi2.product.active = true")
-    List<Product> findCustomersAlsoBought(
-            @Param("productId") Long productId,
-            Pageable pageable);
-
     // Used by home page random product fetch
     @Query("SELECT p FROM Product p WHERE p.active = true ORDER BY FUNCTION('RANDOM')")
     List<Product> findRandomActiveProducts(Pageable pageable);
