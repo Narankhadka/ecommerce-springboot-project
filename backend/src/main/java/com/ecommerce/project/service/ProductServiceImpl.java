@@ -30,6 +30,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import com.ecommerce.project.algorithm.ProductSortSearchUtil;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -132,14 +134,29 @@ public class ProductServiceImpl implements ProductService {
     @Transactional
     public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder)
     {
-        Sort sortByAndOrder=sortOrder.equalsIgnoreCase("asc") ?
+        Sort sortByAndOrder = sortOrder.equalsIgnoreCase("asc") ?
                 Sort.by(sortBy).ascending()
-                :Sort.by(sortBy).descending();
+                : Sort.by(sortBy).descending();
 
-        Pageable pageDetails = PageRequest.of(pageNumber,pageSize,sortByAndOrder);
-        Page<Product>pageProducts=productRepository.findByActiveTrue(pageDetails);
+        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        Page<Product> pageProducts = productRepository.findByActiveTrue(pageDetails);
 
-        List<ProductDTO> productDTOS = pageProducts.getContent().stream()
+        // Convert immutable page content to mutable list for in-place sorting
+        List<Product> productList = new ArrayList<>(pageProducts.getContent());
+
+        // Apply custom Quick Sort after DB fetch
+        // Quick Sort: O(n log n) average, O(n^2) worst case
+        if (productList.size() > 1) {
+            ProductSortSearchUtil.quickSort(
+                productList,
+                0,
+                productList.size() - 1,
+                sortBy != null ? sortBy : "name",
+                sortOrder != null ? sortOrder : "asc"
+            );
+        }
+
+        List<ProductDTO> productDTOS = productList.stream()
                 .map(this::mapToDTO)
                 .toList();
 

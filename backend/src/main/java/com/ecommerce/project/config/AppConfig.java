@@ -15,7 +15,7 @@ public class AppConfig {
         return mapper;
     }
 
-    /** Used by PaymentController to call Khalti and eSewa APIs. */
+
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
