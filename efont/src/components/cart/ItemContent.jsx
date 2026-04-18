@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { HiOutlineTrash } from "react-icons/hi";
 import SetQuantity from "./SetQuantity";
 import { useDispatch } from "react-redux";
@@ -22,7 +22,7 @@ const ItemContent = ({
     const [isUpdating, setIsUpdating] = useState(false);
     const dispatch = useDispatch();
 
-    const handleQtyIncrease = async (cartItems) => {
+    const handleQtyIncrease = useCallback(async (cartItems) => {
         if (isUpdating) return;
         setIsUpdating(true);
         try {
@@ -35,9 +35,9 @@ const ItemContent = ({
         } finally {
             setIsUpdating(false);
         }
-    };
+    }, [dispatch, isUpdating, currentQuantity]);
 
-    const handleQtyDecrease = async (cartItems) => {
+    const handleQtyDecrease = useCallback(async (cartItems) => {
         if (isUpdating) return;
         if (currentQuantity <= 1) return;
         setIsUpdating(true);
@@ -48,11 +48,11 @@ const ItemContent = ({
         } finally {
             setIsUpdating(false);
         }
-    };
+    }, [dispatch, isUpdating, currentQuantity]);
 
-    const removeItemFromCart = (cartItems) => {
+    const removeItemFromCart = useCallback((cartItems) => {
         dispatch(removeFromCart(cartItems, toast));
-    };
+    }, [dispatch]);
 
     return (
         <div className="grid md:grid-cols-5 grid-cols-4 md:text-md text-sm gap-4   items-center  border border-slate-200  rounded-md  lg:px-4  py-4 p-2">
@@ -125,4 +125,4 @@ const ItemContent = ({
     )
 };
 
-export default ItemContent;
+export default React.memo(ItemContent);

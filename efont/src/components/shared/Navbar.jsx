@@ -1,5 +1,5 @@
 import { Badge } from "@mui/material";
-import { useState } from "react";
+import React, { useState } from "react";
 import { FaShoppingCart, FaSignInAlt, FaStore } from "react-icons/fa";
 import { IoIosMenu } from "react-icons/io";
 import { RxCross2 } from "react-icons/rx";
@@ -10,8 +10,8 @@ import UserMenu from "../UserMenu";
 const Navbar = () => {
     const path = useLocation().pathname;
     const [navbarOpen, setNavbarOpen] = useState(false);
-    const { cart } = useSelector((state) => state.carts);
-    const { user } = useSelector((state) => state.auth);
+    const cartLength = useSelector((state) => state.carts.cart.length);
+    const user = useSelector((state) => state.auth.user);
     
     return (
         <div className="h-[70px] bg-custom-gradient text-white z-50 flex items-center sticky top-0">
@@ -68,7 +68,7 @@ const Navbar = () => {
                     to="/cart">
                         <Badge
                             showZero
-                            badgeContent={cart?.length || 0}
+                            badgeContent={cartLength || 0}
                             color="primary"
                             overlap="circular"
                             anchorOrigin={{ vertical: 'top', horizontal: 'right', }}>
@@ -110,4 +110,4 @@ const Navbar = () => {
     )
 }
 
-export default Navbar;
+export default React.memo(Navbar);

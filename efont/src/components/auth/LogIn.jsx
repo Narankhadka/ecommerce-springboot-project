@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { AiOutlineLogin } from "react-icons/ai";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 import InputField from "../shared/InputField";
 import { useDispatch } from "react-redux";
@@ -12,12 +13,13 @@ const LogIn = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const [loader, setLoader] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const {
         register,
         handleSubmit,
         reset,
-        formState: {errors},
+        formState: { errors },
     } = useForm({
         mode: "onTouched",
     });
@@ -51,16 +53,38 @@ const LogIn = () => {
                     errors={errors}
                     />
 
-                <InputField
-                    label="Password"
-                    required
-                    id="password"
-                    type="password"
-                    message="*Password is required"
-                    placeholder="Enter your password"
-                    register={register}
-                    errors={errors}
-                    />
+                {/* Password field with show/hide toggle */}
+                <div className="flex flex-col gap-1 w-full">
+                    <label htmlFor="password" className="font-semibold text-sm text-slate-800">
+                        Password
+                    </label>
+                    <div className="relative">
+                        <input
+                            type={showPassword ? "text" : "password"}
+                            id="password"
+                            placeholder="Enter your password"
+                            className={`w-full px-2 py-2 pr-10 border outline-hidden bg-transparent text-slate-800 rounded-md ${
+                                errors.password?.message ? "border-red-500" : "border-slate-700"
+                            }`}
+                            {...register("password", {
+                                required: { value: true, message: "*Password is required" },
+                            })}
+                        />
+                        <button
+                            type="button"
+                            tabIndex={-1}
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
+                        >
+                            {showPassword ? <FaEyeSlash /> : <FaEye />}
+                        </button>
+                    </div>
+                    {errors.password?.message && (
+                        <p className="text-sm font-semibold text-red-600 mt-0">
+                            {errors.password.message}
+                        </p>
+                    )}
+                </div>
             </div>
 
             <div className="flex justify-end mt-1">

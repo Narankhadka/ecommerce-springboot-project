@@ -12,7 +12,7 @@ import { checkIsAdmin, checkIsSeller } from '../utils/authUtils';
 const UserMenu = () => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const open = Boolean(anchorEl);
-    const { user } = useSelector((state) => state.auth);
+    const user = useSelector((state) => state.auth.user);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
@@ -100,4 +100,4 @@ const UserMenu = () => {
     );
 }
 
-export default UserMenu
+export default React.memo(UserMenu)

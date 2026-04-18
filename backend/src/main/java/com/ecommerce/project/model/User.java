@@ -83,4 +83,7 @@ public class User {
     private String shopName;
     private String shopLocation;
     private String phoneNumber;
+
+    @Column(nullable = false)
+    private boolean active = true;
 }

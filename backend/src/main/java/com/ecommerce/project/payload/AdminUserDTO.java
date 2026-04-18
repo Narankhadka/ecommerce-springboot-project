@@ -15,4 +15,5 @@ public class AdminUserDTO {
     private String email;
     private List<String> roles;
     private Integer orderCount;
+    private boolean active;
 }

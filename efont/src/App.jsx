@@ -35,9 +35,13 @@ import SellerProfile from './components/admin/sellers/SellerProfile';
 import AdminPromotions from './components/admin/promotions/AdminPromotions';
 import PromoPopup from './components/shared/PromoPopup';
 
+const PageWrapper = ({ children }) => (
+  <div className="page-transition">{children}</div>
+);
+
 function App() {
   const dispatch = useDispatch();
-  const { user } = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
 
   // On page refresh: if a valid JWT session exists, reload the cart from the
   // backend so the user always sees their own up-to-date cart.
@@ -55,31 +59,31 @@ function App() {
         <Navbar />
         <Routes>
           {/* Public routes */}
-          <Route path='/' element={<Home />} />
-          <Route path='/products' element={<Products />} />
-          <Route path='/about' element={<About />} />
-          <Route path='/contact' element={<Contact />} />
-          <Route path='/cart' element={<Cart />} />
-          <Route path='/forgot-password' element={<ForgotPasswordPage />} />
-          <Route path='/reset-password' element={<ResetPasswordPage />} />
+          <Route path='/' element={<PageWrapper><Home /></PageWrapper>} />
+          <Route path='/products' element={<PageWrapper><Products /></PageWrapper>} />
+          <Route path='/about' element={<PageWrapper><About /></PageWrapper>} />
+          <Route path='/contact' element={<PageWrapper><Contact /></PageWrapper>} />
+          <Route path='/cart' element={<PageWrapper><Cart /></PageWrapper>} />
+          <Route path='/forgot-password' element={<PageWrapper><ForgotPasswordPage /></PageWrapper>} />
+          <Route path='/reset-password' element={<PageWrapper><ResetPasswordPage /></PageWrapper>} />
 
           {/* Protected: logged-in users only */}
           <Route path='/' element={<PrivateRoute />}>
-            <Route path='/checkout' element={<Checkout />} />
-            <Route path='/order-confirm' element={<PaymentConfirmation />} />
-            <Route path='/order-confirm/esewa' element={<EsewaConfirmation />} />
-            <Route path='/profile/orders' element={<UserOrders />} />
+            <Route path='/checkout' element={<PageWrapper><Checkout /></PageWrapper>} />
+            <Route path='/order-confirm' element={<PageWrapper><PaymentConfirmation /></PageWrapper>} />
+            <Route path='/order-confirm/esewa' element={<PageWrapper><EsewaConfirmation /></PageWrapper>} />
+            <Route path='/profile/orders' element={<PageWrapper><UserOrders /></PageWrapper>} />
           </Route>
 
           {/* Protected: only for unauthenticated users */}
           <Route path='/' element={<PrivateRoute publicPage />}>
-            <Route path='/login' element={<LogIn />} />
-            <Route path='/register' element={<Register />} />
+            <Route path='/login' element={<PageWrapper><LogIn /></PageWrapper>} />
+            <Route path='/register' element={<PageWrapper><Register /></PageWrapper>} />
           </Route>
 
           {/* Protected: admin only */}
           <Route path='/' element={<PrivateRoute adminOnly />}>
-            <Route path='/admin' element={<AdminLayout />}>
+            <Route path='/admin' element={<PageWrapper><AdminLayout /></PageWrapper>}>
               <Route path='' element={<Dashboard />} />
               <Route path='seller-dashboard' element={<SellerDashboard />} />
               <Route path='products' element={<AdminProducts />} />

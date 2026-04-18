@@ -1,7 +1,7 @@
+import React, { useEffect, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 import ProductCard from "../shared/ProductCard";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
 import { fetchCategories } from "../../store/actions";
 import Filter from "./Filter";
 import useProductFilter from "../../hooks/useProductFilter";
@@ -10,12 +10,11 @@ import Paginations from "../shared/Paginations";
 import ProductViewModal from "../shared/ProductViewModal";
 
 const Products = () => {
-    const { isLoading, errorMessage } = useSelector(
-        (state) => state.errors
-    );
-    const {products, categories, pagination} = useSelector(
-        (state) => state.products
-    )
+    const isLoading   = useSelector((state) => state.errors.isLoading);
+    const errorMessage = useSelector((state) => state.errors.errorMessage);
+    const products    = useSelector((state) => state.products.products);
+    const categories  = useSelector((state) => state.products.categories);
+    const pagination  = useSelector((state) => state.products.pagination);
     const dispatch = useDispatch();
     useProductFilter();
 
@@ -85,4 +84,4 @@ const Products = () => {
     )
 }
 
-export default Products;
+export default React.memo(Products);

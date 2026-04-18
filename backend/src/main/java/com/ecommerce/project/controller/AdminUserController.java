@@ -1,5 +1,6 @@
 package com.ecommerce.project.controller;
 
+import com.ecommerce.project.payload.APIResponse;
 import com.ecommerce.project.serviceInterface.AdminUserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +30,12 @@ public class AdminUserController {
 
         Map<String, Object> response = adminUserService.getUsers(pageNumber, pageSize, sortBy, sortOrder, keyword);
         return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PutMapping("/{userId}/toggle-status")
+    public ResponseEntity<APIResponse> toggleUserStatus(@PathVariable Long userId) {
+        String result = adminUserService.toggleUserStatus(userId);
+        return ResponseEntity.ok(new APIResponse(result, true));
     }
 
     @DeleteMapping("/{userId}")

@@ -101,15 +101,20 @@ const LocationPicker = ({ onLocationSelect, mapHeight = 280, buttonStyle = {}, s
                     .finally(() => setLoading(false));
             },
             (err) => {
-                const denied = err.code === 1;
-                setGpsError(
-                    denied
-                        ? 'Location access denied. Please click on the map to select your location.'
-                        : 'Could not get your location. Please click on the map instead.'
-                );
+                let message;
+                if (err.code === 1) {
+                    message = 'Location access denied. Allow location permission in your browser settings, then try again.';
+                } else if (err.code === 2) {
+                    message = 'Your location could not be determined. You may be on a VPN, or location services may be off on your device. Please click on the map instead.';
+                } else if (err.code === 3) {
+                    message = 'Location request timed out. Please check your connection or click on the map instead.';
+                } else {
+                    message = 'Could not get your location. Please click on the map instead.';
+                }
+                setGpsError(message);
                 setLoading(false);
             },
-            { timeout: 10000 }
+            { timeout: 15000, maximumAge: 0, enableHighAccuracy: false }
         );
     };
 

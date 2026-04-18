@@ -850,6 +850,25 @@ export const deleteAdminUser =
     }
   };
 
+export const toggleAdminUserStatus =
+  (userId, toast, setLoader) => async (dispatch, getState) => {
+    try {
+      setLoader(true);
+      const { data } = await api.put(`/admin/users/${userId}/toggle-status`);
+      toast.success(data.message);
+      const params = new URLSearchParams(window.location.search);
+      const page = params.get("page") || 1;
+      const keyword = params.get("keyword") || "";
+      let queryString = `pageNumber=${page - 1}&pageSize=10&sortBy=userId&sortOrder=asc`;
+      if (keyword) queryString += `&keyword=${keyword}`;
+      await dispatch(getAllAdminUsers(queryString));
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update user status");
+    } finally {
+      setLoader(false);
+    }
+  };
+
 export const updateSellerCategory =
   (sellerId, categoryId, toast, setLoader, setOpen) => async (dispatch) => {
     try {

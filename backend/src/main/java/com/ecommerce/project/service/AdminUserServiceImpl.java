@@ -7,10 +7,14 @@ import com.ecommerce.project.model.Cart;
 import com.ecommerce.project.model.User;
 import com.ecommerce.project.payload.AdminUserDTO;
 import com.ecommerce.project.repositories.AddressRepository;
+import com.ecommerce.project.repositories.CartItemRepository;
 import com.ecommerce.project.repositories.CartRepository;
 import com.ecommerce.project.repositories.OrderRepository;
+import com.ecommerce.project.repositories.PasswordResetTokenRepository;
 import com.ecommerce.project.repositories.UserRepository;
 import com.ecommerce.project.serviceInterface.AdminUserService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,19 +30,28 @@ import java.util.stream.Collectors;
 @Service
 public class AdminUserServiceImpl implements AdminUserService {
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
     private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final AddressRepository addressRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
 
     public AdminUserServiceImpl(UserRepository userRepository,
                                 OrderRepository orderRepository,
                                 CartRepository cartRepository,
-                                AddressRepository addressRepository) {
+                                CartItemRepository cartItemRepository,
+                                AddressRepository addressRepository,
+                                PasswordResetTokenRepository passwordResetTokenRepository) {
         this.userRepository = userRepository;
         this.orderRepository = orderRepository;
         this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
         this.addressRepository = addressRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
     @Override
@@ -71,7 +84,8 @@ public class AdminUserServiceImpl implements AdminUserService {
                             user.getUserName(),
                             user.getEmail(),
                             roles,
-                            (int) orderCount
+                            (int) orderCount,
+                            user.isActive()
                     );
                 })
                 .collect(Collectors.toList());
@@ -84,6 +98,24 @@ public class AdminUserServiceImpl implements AdminUserService {
         response.put("totalPages", userPage.getTotalPages());
         response.put("lastPage", userPage.isLast());
         return response;
+    }
+
+    @Override
+    @Transactional
+    public String toggleUserStatus(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "userId", userId));
+
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(r -> r.getRoleName() == AppRole.ROLE_ADMIN);
+        if (isAdmin) {
+            throw new APIException("Cannot change status of admin users");
+        }
+
+        user.setActive(!user.isActive());
+        userRepository.save(user);
+
+        return user.isActive() ? "User activated successfully" : "User deactivated successfully";
     }
 
     @Override
@@ -114,17 +146,28 @@ public class AdminUserServiceImpl implements AdminUserService {
             throw new APIException("Cannot delete user with existing products");
         }
 
-        // Delete addresses before deleting user (FK constraint)
+        // Step 1: Delete cart items first, then cart (avoids TransientPropertyValueException)
+        Cart cart = user.getCart();
+        if (cart != null) {
+            cartItemRepository.deleteAll(cart.getCartItems());
+            cartRepository.delete(cart);
+            user.setCart(null);
+        }
+
+        // Flush and clear session so no stale CartItem/Cart references remain
+        // before any JPQL @Modifying query triggers an auto-flush
+        entityManager.flush();
+        entityManager.clear();
+
+        // Step 2: Delete addresses before deleting user (FK constraint)
         if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
             addressRepository.deleteAll(user.getAddresses());
         }
 
-        // Delete cart and cart items before deleting user (FK constraint)
-        Cart cart = user.getCart();
-        if (cart != null) {
-            cartRepository.delete(cart);
-        }
+        // Step 3: Delete password reset tokens
+        passwordResetTokenRepository.deleteByUser(user);
 
+        // Step 4: Delete user
         userRepository.deleteById(userId);
     }
 }

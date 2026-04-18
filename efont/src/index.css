@@ -50,3 +50,17 @@ layer(base);
     border-color: var(--color-gray-200, currentcolor);
   }
 }
+
+/* Smooth page transitions */
+.page-transition {
+  animation: fadeIn 0.15s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

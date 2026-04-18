@@ -3,10 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { DataGrid } from "@mui/x-data-grid";
 import toast from "react-hot-toast";
-import { FaSearch, FaTimes, FaTrash } from "react-icons/fa";
+import { FaSearch, FaTimes, FaBan, FaCheckCircle } from "react-icons/fa";
 
-import { getAllAdminUsers, deleteAdminUser } from "../../../store/actions";
-import DeleteModal from "../../shared/DeleteModal";
+import { getAllAdminUsers, toggleAdminUserStatus } from "../../../store/actions";
 import Loader from "../../shared/Loader";
 import ErrorPage from "../../shared/ErrorPage";
 
@@ -29,9 +28,7 @@ const AdminUsers = () => {
   const [searchParams] = useSearchParams();
 
   const [searchInput, setSearchInput] = useState(searchParams.get("keyword") || "");
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteLoader, setDeleteLoader] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [toggleLoader, setToggleLoader] = useState(null);
   const [currentPage, setCurrentPage] = useState(
     parseInt(searchParams.get("page") || "1", 10)
   );
@@ -73,14 +70,8 @@ const AdminUsers = () => {
     navigate(`${pathname}?${params}`);
   };
 
-  const handleDeleteClick = (row) => {
-    setSelectedUser(row);
-    setDeleteModalOpen(true);
-  };
-
-  const handleDeleteConfirm = () => {
-    if (!selectedUser) return;
-    dispatch(deleteAdminUser(selectedUser.id, toast, setDeleteLoader, setDeleteModalOpen));
+  const handleToggleStatus = (row) => {
+    dispatch(toggleAdminUserStatus(row.id, toast, (loading) => setToggleLoader(loading ? row.id : null)));
   };
 
   const columns = [
@@ -123,26 +114,45 @@ const AdminUsers = () => {
       type: "number",
     },
     {
+      field: "active",
+      headerName: "Status",
+      width: 110,
+      renderCell: (params) =>
+        params.value ? (
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-300">
+            Active
+          </span>
+        ) : (
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-gray-200 text-gray-500 border border-gray-300">
+            Inactive
+          </span>
+        ),
+    },
+    {
       field: "actions",
       headerName: "Actions",
-      width: 120,
+      width: 130,
       sortable: false,
       renderCell: (params) => {
         const isAdmin = params.row.roles.includes("ROLE_ADMIN");
+        const isActive = params.row.active;
+        const isToggling = toggleLoader === params.row.id;
         return (
           <div className="flex items-center h-full">
             <button
-              disabled={isAdmin}
-              onClick={() => handleDeleteClick(params.row)}
-              title={isAdmin ? "Cannot delete admin users" : "Delete user"}
+              disabled={isAdmin || isToggling}
+              onClick={() => handleToggleStatus(params.row)}
+              title={isAdmin ? "Cannot change status of admin users" : isActive ? "Deactivate user" : "Activate user"}
               className={`flex items-center gap-1 px-3 py-1 rounded text-sm font-semibold transition-colors ${
                 isAdmin
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-red-100 text-red-700 hover:bg-red-600 hover:text-white"
+                  : isActive
+                  ? "bg-red-100 text-red-700 hover:bg-red-600 hover:text-white"
+                  : "bg-green-100 text-green-700 hover:bg-green-600 hover:text-white"
               }`}
             >
-              <FaTrash className="text-xs" />
-              Delete
+              {isActive ? <FaBan className="text-xs" /> : <FaCheckCircle className="text-xs" />}
+              {isToggling ? "..." : isActive ? "Deactivate" : "Activate"}
             </button>
           </div>
         );
@@ -156,6 +166,7 @@ const AdminUsers = () => {
     email: u.email,
     roles: u.roles,
     orderCount: u.orderCount,
+    active: u.active,
   }));
 
   const emptyUsers = !users || users.length === 0;
@@ -214,6 +225,7 @@ const AdminUsers = () => {
           <DataGrid
             rows={tableRows}
             columns={columns}
+            getRowClassName={(params) => (!params.row.active ? "opacity-50" : "")}
             paginationMode="server"
             rowCount={pagination?.totalElements || 0}
             initialState={{
@@ -238,13 +250,6 @@ const AdminUsers = () => {
         </div>
       )}
 
-      <DeleteModal
-        open={deleteModalOpen}
-        setOpen={setDeleteModalOpen}
-        title={`Delete user: ${selectedUser?.userName}`}
-        onDeleteHandler={handleDeleteConfirm}
-        loader={deleteLoader}
-      />
     </React.Fragment>
   );
 };
