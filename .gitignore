@@ -1,2 +1,67 @@
+# =============================================================================
+# OS / editor noise
+# =============================================================================
+.DS_Store
+Thumbs.db
+.giti
+*.swp
+*.swo
+
+# =============================================================================
+# IDE / tooling
+# =============================================================================
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.project
+.classpath
+.settings/
+
+# =============================================================================
+# Environment files (never commit secrets)
+# =============================================================================
+.env
+.env.local
+.env.*.local
+backend/.env
+efont/.env
+
+# Spring Boot configuration (contains DB password, JWT secret, mail creds)
 src/main/resources/application.properties
 backend/src/main/resources/application.properties
+backend/src/main/resources/application-*.properties
+
+# =============================================================================
+# Backend (Maven / Spring Boot)
+# =============================================================================
+backend/target/
+target/
+*.class
+*.jar
+*.war
+*.log
+hs_err_pid*
+
+# =============================================================================
+# Frontend (Node / Vite)
+# =============================================================================
+efont/node_modules/
+efont/dist/
+efont/.vite/
+efont/coverage/
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =============================================================================
+# User-uploaded images (development storage; do not commit)
+# =============================================================================
+/images/
+backend/images/
