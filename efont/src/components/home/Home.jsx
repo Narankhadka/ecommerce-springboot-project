@@ -1,4 +1,4 @@
-import HeroBanner from "./HeroBanner";
+      import HeroBanner from "./HeroBanner";
 import { useEffect, useState } from "react";
 import ProductCard from "../shared/ProductCard";
 import Loader from "../shared/Loader";
