@@ -7,7 +7,7 @@ A full-stack online marketplace tailored to the Nepali market, supporting custom
 > Final-year academic / portfolio project by [Naran Khadka](#author). Built end to end as a learning exercise in Spring Boot, JWT-based security, JPA modelling, and a production-style React + Redux Toolkit frontend.
 
 ---
-## Demo / Screenshots
+## Screenshots
 
 | Home | Product Page | Admin Dashboard |
 |------|--------------|-----------------|
@@ -15,10 +15,7 @@ A full-stack online marketplace tailored to the Nepali market, supporting custom
 
 | Cart | Order History | Seller Earnings |
 |------|---------------|-----------------|
-| ![Cart](https://github.com/user-attachments/assets/b7d52f4c-50f2-43b1-a6cb-1a71981538f5) | <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 33 27" src="https://github.com/user-attachments/assets/6851e5a9-7902-4314-a2ff-6a5071c21379" />
- | ![Seller Earnings](https://github.com/user-attachments/assets/5da12e44-68ae-4751-806b-aef4da57cbd7) |
----
-
+| ![Cart](https://github.com/user-attachments/assets/b7d52f4c-50f2-43b1-a6cb-1a71981538f5) | ![Order History](https://github.com/user-attachments/assets/6851e5a9-7902-4314-a2ff-6a5071c21379) | ![Seller Earnings](https://github.com/user-attachments/assets/5da12e44-68ae-4751-806b-aef4da57cbd7) |
 
 ## Key Features
 
