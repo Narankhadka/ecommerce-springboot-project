@@ -34,5 +34,6 @@ build/
 .DS_Store
 **/.DS_Store
 
-.imlapplication.properties
+*.iml
+application.properties
 
