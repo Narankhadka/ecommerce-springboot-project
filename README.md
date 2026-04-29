@@ -7,24 +7,15 @@ A full-stack online marketplace tailored to the Nepali market, supporting custom
 > Final-year academic / portfolio project by [Naran Khadka](#author). Built end to end as a learning exercise in Spring Boot, JWT-based security, JPA modelling, and a production-style React + Redux Toolkit frontend.
 
 ---
-
 ## Demo / Screenshots
-
-_Screenshots and a live demo link will be added here._
 
 | Home | Product Page | Admin Dashboard |
 |------|--------------|-----------------|
-| <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 32 32" src="https://github.com/user-attachments/assets/b676043c-dee2-4c9b-a5de-e3ab29306ad3" />
- | <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 32 45" src="https://github.com/user-attachments/assets/e2e63b2c-a869-4eb4-9b98-de0f2c737d1f" />
-| <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 33 03" src="https://github.com/user-attachments/assets/31fc8c66-6be6-4e62-8aeb-1fe73d66bd5b" />
- |
+| ![Home](https://github.com/user-attachments/assets/b676043c-dee2-4c9b-a5de-e3ab29306ad3) | ![Product Page](https://github.com/user-attachments/assets/e2e63b2c-a869-4eb4-9b98-de0f2c737d1f) | ![Admin Dashboard](https://github.com/user-attachments/assets/31fc8c66-6be6-4e62-8aeb-1fe73d66bd5b) |
 
-| Cart | Order history | Seller Earnings |
-|------|------------------|-----------------|
-| <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 33 39" src="https://github.com/user-attachments/assets/b7d52f4c-50f2-43b1-a6cb-1a71981538f5" />
- |  | <img width="1710" height="1073" alt="Screenshot 2026-04-08 at 17 34 11" src="https://github.com/user-attachments/assets/5da12e44-68ae-4751-806b-aef4da57cbd7" />
- |
-
+| Cart | Order History | Seller Earnings |
+|------|---------------|-----------------|
+| ![Cart](https://github.com/user-attachments/assets/b7d52f4c-50f2-43b1-a6cb-1a71981538f5) | _placeholder_ | ![Seller Earnings](https://github.com/user-attachments/assets/5da12e44-68ae-4751-806b-aef4da57cbd7) |
 ---
 
 ## Key Features
